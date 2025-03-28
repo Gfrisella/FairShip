@@ -104,6 +104,7 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
           Bool_t stepGeo) {
   if (!stepGeo)
   {
+    std::cout << "Guglielmo: 7_1 - CreateArb8_2 -WTF- - ShipMuonShield" << std::endl;  
     CreateArb8 (arbName, medium, dZ, corners, color, magField, tShield, x_translation, y_translation, z_translation);
     return;
   }

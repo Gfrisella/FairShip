@@ -12,15 +12,15 @@ from ShipGeoConfig import AttrDict, ConfigRegistry
 # tankDesign = 5 #  4=TP elliptical tank design, 5 = optimized conical rectangular design, 6=5 without segment-1
 shield_db = {
             "combi": [  0.0 , 231.0 , 208.0 , 207.0 , 281.0 , 172.82 , 212.54 , 168.64 ,
-                    0 ,      0 ,     0 ,      0,     0 ,     0 ,  
-                    50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,  
-                    72.0 ,  51.0 ,  29.0 ,  46.0 ,  10.0 ,   7.0 ,  
+                    0 ,      0 ,     0 ,      0,     0 ,     0 ,
+                    50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,
+                    72.0 ,  51.0 ,  29.0 ,  46.0 ,  10.0 ,   7.0 ,
                     54.0 ,  38.0 ,  46.0 , 162.0 ,  14.0 ,   9.0 ,
-                    10.0 ,  31.0 ,  35.0 ,  31.0 ,  51.0 ,  11.0 ,   
-                    3.0 ,  32.0 ,  54.0 ,  24.0 ,   8.0 ,   8.0 ,  
-                    22.0 ,  32.0 , 209.0 ,  35.0 ,   8.0 ,  13.0 ,  
+                    10.0 ,  31.0 ,  35.0 ,  31.0 ,  51.0 ,  11.0 ,
+                    3.0 ,  32.0 ,  54.0 ,  24.0 ,   8.0 ,   8.0 ,
+                    22.0 ,  32.0 , 209.0 ,  35.0 ,   8.0 ,  13.0 ,
                     33.0 ,  77.0 ,  85.0 , 241.0 ,   9.0 ,  26.0 ],
-                    
+
             "sc_v6": [  0 , 231.0 ,   0.0 , 353.1 , 125.1 , 184.8 , 150.2 , 186.8 ,
                        0 ,      0 ,     0 ,      0,     0 ,     0 ,
                     50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,
@@ -78,9 +78,9 @@ with ConfigRegistry.register_config("basic") as c:
     c.shieldName = shieldName
     if shieldName == "sc_v6":
         c.SC_mag = True
-    else: 
+    else:
         c.SC_mag = False
-    
+
     # global muShieldDesign, targetOpt, strawDesign, Yheight
     c.Yheight = Yheight*u.m
     # decision by the SP

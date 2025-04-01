@@ -26,7 +26,7 @@ shield_db = {
                     3.0 ,  32.0 ,  54.0 ,  24.0 ,   8.0 ,   8.0 ,  
                     22.0 ,  32.0 , 209.0 ,  35.0 ,   8.0 ,  13.0 ,  
                     33.0 ,  77.0 ,  85.0 , 241.0 ,   9.0 ,  26.0 ],
-                    
+
             "sc_v6": [  0 , 231.0 ,   0.0 , 353.1 , 125.1 , 184.8 , 150.2 , 186.8 ,
                        0 ,      0 ,     0 ,      0,     0 ,     0 ,
                     50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,
@@ -81,7 +81,7 @@ with ConfigRegistry.register_config("basic") as c:
 
     c.shieldName = shieldName
     c.SC_mag = shield_db['Hybrid_flag']
-    
+
     # global muShieldDesign, targetOpt, strawDesign, Yheight
     c.Yheight = Yheight*u.m
     # decision by the SP

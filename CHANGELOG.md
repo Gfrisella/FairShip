@@ -47,6 +47,7 @@ it in future.
 * Removed cobalt option
 * run_simScript.py: The --noSC flag is removed, whether or not a configuration is SC/hybrid depends on the config selected. Configurations are defined in the shield_db in geometry_config.py
 
+
 ## 25.01
 
 ### Added

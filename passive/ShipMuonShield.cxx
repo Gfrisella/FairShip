@@ -140,7 +140,7 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
     dX2 + middleGap2, dY2 - anti_overlap,
     dX2 + middleGap2, -(dY2 - anti_overlap)
       };
-  
+
       std::array<Double_t, 16> cornersTL = {middleGap + dX,
                                             dY,
                                             middleGap,
@@ -157,7 +157,7 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
                                             dY2 + dX2,
                                             dX2 + middleGap2 + coil_gap2,
                                             dY2};
-  
+
       std::array<Double_t, 16> cornersMainSideL = {
     dX + middleGap + gap, -(dY - anti_overlap),
     dX + middleGap + gap, dY - anti_overlap,
@@ -180,7 +180,7 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
       dX2 + middleGap2, dY2 - anti_overlap,
       dX2 + middleGap2, -(dY2 - anti_overlap)
         };
-  
+
       cornersTL = {middleGap + dX,
                     dY,
                     middleGap,
@@ -197,7 +197,7 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
                     dY2 + 3*dX2,
                     dX2 + middleGap2 + coil_gap2,
                     dY2};
-  
+
       cornersMainSideL ={
       dX + middleGap + gap, -(dY - anti_overlap),
       dX + middleGap + gap, dY - anti_overlap,

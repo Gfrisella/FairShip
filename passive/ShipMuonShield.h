@@ -20,16 +20,8 @@ class ShipMuonShield : public FairModule
 {
   public:
 
-   ShipMuonShield(const char* name, const Int_t Design=1,  const char* Title="ShipMuonShield",
-                               Double_t Z=0, Double_t L0=0, Double_t L1=0, Double_t L2=0, Double_t L3=0, Double_t L4=0, Double_t L5=0, Double_t L6=0,
-                               Double_t L7=0, Double_t L8=0,Double_t gap=0,Double_t LE=0,Double_t y=400, Double_t floor=500, Double_t field=1.7,
-                               const Int_t withCoMagnet=0, const Bool_t StepGeo=false,
-                               const Bool_t WithConstAbsorberField=true, const Bool_t WithConstShieldField=true);
-
-   ShipMuonShield(TString geofile, Double_t floor=500, const Int_t withCoMagnet=0, const Bool_t StepGeo=false,
-   const Bool_t WithConstAbsorberField=true, const Bool_t WithConstShieldField=true);
-   ShipMuonShield(TVectorT<Double_t> in_params,
-                  Double_t floor, const Int_t withCoMagnet, const Bool_t StepGeo, const Bool_t WithConstAbsorberField, const Bool_t WithConstShieldField, const Bool_t SC_key);
+   ShipMuonShield(std::vector<double> in_params,
+                  Double_t floor, const Bool_t StepGeo, const Bool_t WithConstAbsorberField, const Bool_t WithConstShieldField, const Bool_t SC_key);
    ShipMuonShield();
    virtual ~ShipMuonShield();
    void ConstructGeometry();
@@ -49,8 +41,6 @@ class ShipMuonShield : public FairModule
   Bool_t fSupport;
   Double_t  dZ0,dZ1,dZ2,dZ3,dZ4,dZ5,dZ6,dZ7,dZ8,dXgap,zEndOfAbsorb,mag4Gap,midGapOut7,midGapOut8;
   Int_t InitMedium(TString name);
-
-  Int_t fWithCoMagnet;
   Bool_t fStepGeo;
   Bool_t fWithConstAbsorberField;
   Bool_t fWithConstShieldField;

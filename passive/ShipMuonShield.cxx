@@ -25,7 +25,7 @@ Double_t tesla = 10 * kilogauss;
 ShipMuonShield::~ShipMuonShield() {}
 ShipMuonShield::ShipMuonShield() : FairModule("ShipMuonShield", "") {}
 
-ShipMuonShield::ShipMuonShield(TVectorT<Double_t> in_params,
+ShipMuonShield::ShipMuonShield(std::vector<double> in_params,
 Double_t floor, const Bool_t StepGeo, const Bool_t WithConstAbsorberField, const Bool_t WithConstShieldField,  const Bool_t SC_key)
   : FairModule("MuonShield", "ShipMuonShield")
 {
@@ -35,10 +35,9 @@ Double_t floor, const Bool_t StepGeo, const Bool_t WithConstAbsorberField, const
   fWithConstAbsorberField = WithConstAbsorberField;
   fWithConstShieldField = WithConstShieldField;
   fStepGeo = StepGeo;
-  Double_t LE = 7 * m; //??????????????????
-  fDesign = 8;
+  Double_t LE = 7 * m; //FIXME
   fSC_mag = SC_key;
-  fField = 1.9;
+  fField = 1.7 * tesla;
   dZ1 = in_params[0]; // 0.4 * m if 0.1 cm gap between the target and the absorber;
   dZ2 = in_params[1]; // 2.31 * m;
   dZ3 = in_params[2];
@@ -108,7 +107,7 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
     return;
   }
   else{
-    Fatal( "ShipMuonShield", "Version no more supported \n");
+    LOG(fatal) << "Muon shield version no longer supported.";
   }
 }
 
@@ -483,7 +482,7 @@ void ShipMuonShield::ConstructGeometry()
           HmainSideMagOut[nM], gapIn[nM], gapOut[nM], Z[nM], nM==8, fStepGeo, nM == 3 && fSC_mag);
 
 
-	if (nM==8 || !fSupport) continue;
+	if (nM==8 ) continue;
 	Double_t dymax = std::max(dYIn[nM] + dXIn[nM], dYOut[nM] + dXOut[nM]);
 	Double_t dymin = std::min(dYIn[nM] + dXIn[nM], dYOut[nM] + dXOut[nM]);
 	Double_t slope =
@@ -514,25 +513,7 @@ void ShipMuonShield::ConstructGeometry()
 	    +w2, +h2,
 	    -w2, +h2,
 	};
-  if (!fStepGeo)
-  {
 
-
-  	TGeoVolume *pillar1 =
-  	    gGeoManager->MakeArb8(TString::Format("pillar_%d", 2 * nM - 1),
-  				  steel, length, verticesIn.data());
-  	TGeoVolume *pillar2 =
-  	    gGeoManager->MakeArb8(TString::Format("pillar_%d", 2 * nM), steel,
-  				  length, verticesOut.data());
-  	pillar1->SetLineColor(kGreen-5);
-  	pillar2->SetLineColor(kGreen-5);
-  	tShield->AddNode(pillar1, 1, new TGeoTranslation(
-  				     0, -0.5 * (dYIn[nM] + dXIn[nM] + 10 * m - fFloor),
-  				     Z[nM] - dZf[nM] + length));
-  	tShield->AddNode(pillar2, 1, new TGeoTranslation(
-  				     0, -0.5 * (dYOut[nM] + dXOut[nM] + 10 * m - fFloor),
-  				     Z[nM] + dZf[nM] - length));
-  }
       }
 
       // Place in origin of SHiP coordinate system as subnodes placed correctly

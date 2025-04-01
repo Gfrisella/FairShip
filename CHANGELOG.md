@@ -43,7 +43,10 @@ it in future.
 
 * fix: Remove unused, unrunnable shipPatRec_prev.py
 * feat(geometry): Dropped support for old geometries without DecayVolumeMedium explicitly set(pre 24.11 release case).
-* ShipMuonShield : Removed old option (7,9,10). Muonshield geometry is defined in geometry config.py and the SC is based on the choice made. Removed Cobalt option. 
+* Removed old options 7, 9, 10
+* Removed cobalt option
+* run_simScript.py: The --noSC flag is removed, whether or not a configuration is SC/hybrid depends on the config selected. Configurations are defined in the shield_db in geometry_config.py
+
 ## 25.01
 
 ### Added

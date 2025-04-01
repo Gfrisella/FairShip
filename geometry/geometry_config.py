@@ -15,9 +15,7 @@ from ShipGeoConfig import AttrDict, ConfigRegistry
 # The first row is the length of the magnets
 # The other rows are the transverse dimensions of the magnets:  dXIn[i], dXOut[i] , dYIn[i], dYOut[i], gapIn[i], gapOut[i].
 shield_db = {
-            "Hybrid_flag": False,
-            
-            "combi": [  0.0 , 231.0 , 208.0 , 207.0 , 281.0 , 172.82 , 212.54 , 168.64 ,
+            "combi": {"Hybrid_flag": False, "params": [  0.0 , 231.0 , 208.0 , 207.0 , 281.0 , 172.82 , 212.54 , 168.64 ,
                     0 ,      0 ,     0 ,      0,     0 ,     0 ,  
                     50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,  
                     72.0 ,  51.0 ,  29.0 ,  46.0 ,  10.0 ,   7.0 ,  
@@ -25,17 +23,17 @@ shield_db = {
                     10.0 ,  31.0 ,  35.0 ,  31.0 ,  51.0 ,  11.0 ,   
                     3.0 ,  32.0 ,  54.0 ,  24.0 ,   8.0 ,   8.0 ,  
                     22.0 ,  32.0 , 209.0 ,  35.0 ,   8.0 ,  13.0 ,  
-                    33.0 ,  77.0 ,  85.0 , 241.0 ,   9.0 ,  26.0 ],
+                    33.0 ,  77.0 ,  85.0 , 241.0 ,   9.0 ,  26.0 ]},
 
-            "sc_v6": [  0 , 231.0 ,   0.0 , 353.1 , 125.1 , 184.8 , 150.2 , 186.8 ,
-                       0 ,      0 ,     0 ,      0,     0 ,     0 ,
+            "sc_v6": { "Hybrid_flag": True, "params":[  0 , 231.0 ,   0.0 , 353.1 , 125.1 , 184.8 , 150.2 , 186.8 ,
+                    0 ,      0 ,     0 ,      0,     0 ,     0 ,
                     50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,
                     72.0 ,   51.0 ,  29.0 ,  46.0 ,  10.0 ,   7.0 ,
                     45.7 ,   45.7 ,  22.2 ,  22.2 ,  27.0 ,  16.3 ,
                     10.0 ,   31.0 ,  35.0 ,  31.0 ,  51.0 ,  11.0 ,
                     24.8 ,   48.8 ,   8.0 , 104.8 ,  15.8 ,  16.8 ,
-                     3.0 ,  100.0 , 192.0 , 192.0 ,   2.0 ,   4.8 ,
-                     3.0 ,  100.0 ,   8.0 , 172.7 ,  46.8 , 2.0 ]
+                    3.0 ,  100.0 , 192.0 , 192.0 ,   2.0 ,   4.8 ,
+                    3.0 ,  100.0 ,   8.0 , 172.7 ,  46.8 , 2.0 ]}
 }
 if "muShieldDesign" not in globals():
     muShieldDesign = 7
@@ -80,7 +78,7 @@ with ConfigRegistry.register_config("basic") as c:
     c.SND = SND
 
     c.shieldName = shieldName
-    c.SC_mag = shield_db['Hybrid_flag']
+    c.SC_mag = shield_db[shieldName]['Hybrid_flag']
 
     # global muShieldDesign, targetOpt, strawDesign, Yheight
     c.Yheight = Yheight*u.m
@@ -304,7 +302,7 @@ with ConfigRegistry.register_config("basic") as c:
     
     
     assert shieldName
-    params = shield_db[shieldName]
+    params = shield_db[shieldName]['params']
     c.muShield.params = params
     c.muShield.dZ1 = params[0]
     c.muShield.dZ2 = params[1]

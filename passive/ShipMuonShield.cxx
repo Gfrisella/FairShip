@@ -45,8 +45,7 @@ Double_t floor, const Bool_t StepGeo, const Bool_t WithConstAbsorberField, const
   dZ5 = in_params[4];
   dZ6 = in_params[5];
   dZ7 = in_params[6];
-  dZ8 = in_params[7];
-  fMuonShieldLength = 2 * (dZ1 + dZ2 + dZ3 + dZ4 + dZ5 + dZ6 + dZ7 + dZ8) + LE;
+  fMuonShieldLength = 2 * (dZ1 + dZ2 + dZ3 + dZ4 + dZ5 + dZ6 + dZ7 ) + LE;
 
   fFloor = floor;
   fSupport = false;
@@ -280,7 +279,8 @@ Int_t ShipMuonShield::Initialize(std::vector<TString> &magnetName,
 				std::vector<Double_t> &HmainSideMagOut,
 				std::vector<Double_t> &gapIn, std::vector<Double_t> &gapOut,
 				std::vector<Double_t> &Z) {
-  const Int_t nMagnets = 9;
+  const Int_t nMagnets = 8;
+  std::cout << " INITIALIZE " << std::endl;
   magnetName.reserve(nMagnets);
   fieldDirection.reserve(nMagnets);
   for (auto i :
@@ -291,7 +291,7 @@ Int_t ShipMuonShield::Initialize(std::vector<TString> &magnetName,
 
   Double_t zgap = 10 * cm;  // fixed distance between magnets in Z-axis
 
-  magnetName = {"MagnAbsorb1", "MagnAbsorb2", "Magn1", "Magn2", "Magn3",
+  magnetName = {"MagnAbsorb", "Magn1", "Magn2", "Magn3",
     "Magn4",       "Magn5",       "Magn6", "Magn7"};
 
   fieldDirection = {
@@ -303,44 +303,50 @@ FieldDirection::down, FieldDirection::down, FieldDirection::down,
   std::vector<Double_t> params;
   params = shield_params;
 
-  const int offset = 7;
+  const int offset = nMagnets - 1;
 
   for (Int_t i = 0; i < nMagnets - 1; ++i) {
-    dXIn[i] = params[offset + i * 6 + 1];
-    dXOut[i] = params[offset + i * 6 + 2];
-    dYIn[i] = params[offset + i * 6 + 3];
-    dYOut[i] = params[offset + i * 6 + 4];
-    gapIn[i] = params[offset + i * 6 + 5];
-    gapOut[i] = params[offset + i * 6 + 6];
+    std::cout << "i: " << i << ", magnet name: " << magnetName[i] << std::endl;
+    dXIn[i] = params[offset + i * 6 + 0];
+    std::cout << "dXIn[i]: " << dXIn[i] << ", magnet name: " << magnetName[i] << std::endl;
+    dXOut[i] = params[offset + i * 6 + 1];
+    std::cout << "dXOut[i]: " << dXOut[i] << ", magnet name: " << magnetName[i] << std::endl;
+    dYIn[i] = params[offset + i * 6 + 2];
+    std::cout << "dYIn[i]: " << dYIn[i] << ", magnet name: " << magnetName[i] << std::endl;
+    dYOut[i] = params[offset + i * 6 + 3];
+    std::cout << "dYOut[i]: " << dYOut[i] << ", magnet name: " << magnetName[i] << std::endl;
+    gapIn[i] = params[offset + i * 6 + 4];
+    std::cout << "gapIn[i]: " << gapIn[i] << ", magnet name: " << magnetName[i] << std::endl;
+    gapOut[i] = params[offset + i * 6 + 5];
+    std::cout << "gapOut[i]: " << gapOut[i] << ", magnet name: " << magnetName[i] << std::endl;
   }
 
-  dZ[0] = dZ1 - zgap / 2;
+  dZ[0] = - zgap / 2;
   Z[0] = zEndOfAbsorb + dZ[0] + zgap;
-  dZ[1] = dZ2 - zgap / 2;
+  std::cout << "Z[0]: " << Z[0] << std::endl;
+  dZ[1] = dZ1 - zgap / 2;
   Z[1] = Z[0] + dZ[0] + dZ[1] + zgap;
-  dZ[2] = dZ3 - zgap / 2;
+  std::cout << "Z[1]: " << Z[0] << std::endl;
+  dZ[2] = dZ2 - zgap / 2;
   Z[2] = Z[1] + dZ[1] + dZ[2] + 2 * zgap;
-  dZ[3] = dZ4 - zgap / 2;
+  std::cout << "Z[2]: " << Z[2] << std::endl;
+  dZ[3] = dZ3 - zgap / 2;
   Z[3] = Z[2] + dZ[2] + dZ[3] + zgap;
-  dZ[4] = dZ5 - zgap / 2;
+  std::cout << "Z[3]: " << Z[3] << std::endl;
+  dZ[4] = dZ4 - zgap / 2;
   Z[4] = Z[3] + dZ[3] + dZ[4] + zgap;
-  dZ[5] = dZ6 - zgap / 2;
+  std::cout << "Z[4]: " << Z[4] << std::endl;
+  dZ[5] = dZ5 - zgap / 2;
   Z[5] = Z[4] + dZ[4] + dZ[5] + zgap;
-  dZ[6] = dZ7 - zgap / 2;
+  std::cout << "Z[5]: " << Z[5] << std::endl;
+  dZ[6] = dZ6 - zgap / 2;
   Z[6] = Z[5] + dZ[5] + dZ[6] + zgap;
-  dZ[7] = dZ8 - zgap / 2;
+  std::cout << "Z[6]: " << Z[6] << std::endl;
+  dZ[7] = dZ7 - zgap / 2;
   Z[7] = Z[6] + dZ[6] + dZ[7] + zgap;
+  std::cout << "Z[7]: " << Z[7] << std::endl;
 
-  dXIn[8] = dXOut[7];
-  dYIn[8] = dYOut[7];
-  dXOut[8] = dXIn[8];
-  dYOut[8] = dYIn[8];
-  gapIn[8] = gapOut[7];
-  gapOut[8] = gapIn[8];
-  dZ[8] = 0.1 * m;
-  Z[8] = Z[7] + dZ[7] + dZ[8];
-
-  for (int i = 0; i < nMagnets; ++i) {
+  for (int i = 0; i < nMagnets - 1; ++i) {
     midGapIn[i] = 0.;
     midGapOut[i] = 0.;
     HmainSideMagIn[i] = dYIn[i] / 2;
@@ -400,21 +406,28 @@ void ShipMuonShield::ConstructGeometry()
       auto *target_pit_shift = new TGeoTranslation("target_pit_shift", 0 * m, -2.2 * m, zEndOfAbsorb - 2 * m - z_transition);
       target_pit_shift->RegisterYourself();
 
-        float mField = 1.9 * tesla;
-	TGeoUniformMagField *fieldsAbsorber[4] = {
-	    new TGeoUniformMagField(0., mField, 0.),
-	    new TGeoUniformMagField(0., -mField, 0.),
-	    new TGeoUniformMagField(-mField, 0., 0.),
-	    new TGeoUniformMagField(mField, 0., 0.)
-	};
+      float mField = 1.9 * tesla;
+      TGeoUniformMagField *fieldsAbsorber[4] = {
+          new TGeoUniformMagField(0., mField, 0.),
+          new TGeoUniformMagField(0., -mField, 0.),
+          new TGeoUniformMagField(-mField, 0., 0.),
+          new TGeoUniformMagField(mField, 0., 0.)
+      };
 
-	for (Int_t nM = 1; nM < 2; nM++) {
-	  CreateMagnet(magnetName[nM], iron, tShield, fieldsAbsorber,
-		       fieldDirection[nM], dXIn[nM], dYIn[nM], dXOut[nM],
-		       dYOut[nM], dZf[nM], midGapIn[nM], midGapOut[nM],
-		       HmainSideMagIn[nM], HmainSideMagOut[nM], gapIn[nM],
-		       gapOut[nM], Z[nM], true, false);
-	}
+      // The absorber 
+      std::cout << "Creating the absorber" << std::endl;
+      std::cout << magnetName[0] << ", " << iron << ", " << tShield << ", " << fieldsAbsorber[0] << ", "
+                << dXIn[0] << ", " << dYIn[0] << ", " << dXOut[0] << ", "
+                << dYOut[0] << ", " << dZf[0] << ", " << midGapIn[0] << ", " << midGapOut[0] << ", "
+                << HmainSideMagIn[0] << ", " << HmainSideMagOut[0] << ", " << gapIn[0] << ", "
+                << gapOut[0] << ", " << Z[0] << std::endl;
+
+      CreateMagnet(magnetName[0], iron, tShield, fieldsAbsorber,
+              fieldDirection[0], dXIn[0], dYIn[0], dXOut[0],
+              dYOut[0], dZf[0], midGapIn[0], midGapOut[0],
+              HmainSideMagIn[0], HmainSideMagOut[0], gapIn[0],
+              gapOut[0], Z[0], true, false);
+
 
       std::vector<TGeoTranslation*> mag_trans;
 
@@ -426,7 +439,7 @@ void ShipMuonShield::ConstructGeometry()
       auto *absorber_shift = new TGeoTranslation("absorber_shift", 1.435 * m, 2.05 * m, 0);
       absorber_shift->RegisterYourself();
 
-      const std::vector<TString> absorber_magnets = {"MagnAbsorb2"};
+      const std::vector<TString> absorber_magnets = {"MagnAbsorb"};
       const std::vector<TString> magnet_components = {
         "_MiddleMagL", "_MiddleMagR",  "_MagRetL",    "_MagRetR",
         "_MagTopLeft", "_MagTopRight", "_MagBotLeft", "_MagBotRight",
@@ -458,7 +471,8 @@ void ShipMuonShield::ConstructGeometry()
 
 
       std::array<double, 9> fieldScale = {{1., 1., 1., 1., 1., 1., 1., 1., 1.}};
-      for (Int_t nM = 2; nM <= (nMagnets - 1); nM++) {
+      std::cout << "Creating the magnets" << std::endl;
+      for (Int_t nM = 1; nM < (nMagnets - 1); nM++) {
 
           // SC MAGNET
   if ((dZf[nM] < 1e-5 || nM == 4 ) && fSC_mag) {
@@ -476,43 +490,25 @@ void ShipMuonShield::ConstructGeometry()
   TGeoUniformMagField *ConRField_s    = new TGeoUniformMagField(-ironField_s,0.,0.);
   TGeoUniformMagField *ConLField_s    = new TGeoUniformMagField(ironField_s,0.,0.);
   TGeoUniformMagField *fields_s[4] = {magFieldIron_s,RetField_s,ConRField_s,ConLField_s};
+  std::cout << "Creating the magnet: " << magnetName[nM] << std::endl;
+  std::cout << "dXIn[nM]: " << dXIn[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "dXOut[nM]: " << dXOut[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "dYIn[nM]: " << dYIn[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "dYOut[nM]: " << dYOut[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "dZf[nM]: " << dZf[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "midGapIn[nM]: " << midGapIn[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "midGapOut[nM]: " << midGapOut[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "HmainSideMagIn[nM]: " << HmainSideMagIn[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "HmainSideMagOut[nM]: " << HmainSideMagOut[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "gapIn[nM]: " << gapIn[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "gapOut[nM]: " << gapOut[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "Z[nM]: " << Z[nM] << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "fSC_mag: " << fSC_mag << ", magnet name: " << magnetName[nM] << std::endl;
+  std::cout << "fStepGeo: " << fStepGeo << ", magnet name: " << magnetName[nM] << std::endl;
   CreateMagnet(magnetName[nM], iron, tShield, fields_s, fieldDirection[nM],
           dXIn[nM], dYIn[nM], dXOut[nM], dYOut[nM], dZf[nM],
           midGapIn[nM], midGapOut[nM], HmainSideMagIn[nM],
           HmainSideMagOut[nM], gapIn[nM], gapOut[nM], Z[nM], nM==8, fStepGeo, nM == 3 && fSC_mag);
-
-
-	if (nM==8 ) continue;
-	Double_t dymax = std::max(dYIn[nM] + dXIn[nM], dYOut[nM] + dXOut[nM]);
-	Double_t dymin = std::min(dYIn[nM] + dXIn[nM], dYOut[nM] + dXOut[nM]);
-	Double_t slope =
-	    (dYIn[nM] + dXIn[nM] - dYOut[nM] - dXOut[nM]) / (2 * dZf[nM]);
-	Double_t w1 = 2 * dXIn[nM] + std::max(20., gapIn[nM]);
-	Double_t w2 = 2 * dXOut[nM] + std::max(20., gapOut[nM]);
-	Double_t anti_overlap = 0.1;
-	Double_t h1 = 0.5 * (dYIn[nM] + dXIn[nM] + anti_overlap - 10 * m + fFloor);
-	Double_t h2 = 0.5 * (dYOut[nM] + dXOut[nM] + anti_overlap - 10 * m + fFloor);
-	Double_t length = std::min(0.5 * m, std::abs(dZf[nM]/2. - 5 * cm));
-	std::array<Double_t, 16> verticesIn = {
-	    -w1, -h1,
-	    +w1, -h1,
-	    +w1, +h1,
-	    -w1, +h1,
-	    -w1, -h1 + slope * 2. * length,
-	    +w1, -h1 + slope * 2. * length,
-	    +w1, +h1,
-	    -w1, +h1,
-	};
-	std::array<Double_t, 16> verticesOut = {
-	    -w2, -h2 - slope * 2. * length,
-	    +w2, -h2 - slope * 2. * length,
-	    +w2, +h2,
-	    -w2, +h2,
-	    -w2, -h2,
-	    +w2, -h2,
-	    +w2, +h2,
-	    -w2, +h2,
-	};
 
       }
 

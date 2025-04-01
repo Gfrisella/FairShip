@@ -15,8 +15,7 @@ from ShipGeoConfig import AttrDict, ConfigRegistry
 # The first row is the length of the magnets
 # The other rows are the transverse dimensions of the magnets:  dXIn[i], dXOut[i] , dYIn[i], dYOut[i], gapIn[i], gapOut[i].
 shield_db = {
-            "combi": {"Hybrid_flag": False, "params": [  0.0 , 231.0 , 208.0 , 207.0 , 281.0 , 172.82 , 212.54 , 168.64 ,
-                    0 ,      0 ,     0 ,      0,     0 ,     0 ,  
+            "combi": {"Hybrid_flag": False, "params": [ 231.0 , 208.0 , 207.0 , 281.0 , 172.82 , 212.54 , 168.64 , 
                     50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,  
                     72.0 ,  51.0 ,  29.0 ,  46.0 ,  10.0 ,   7.0 ,  
                     54.0 ,  38.0 ,  46.0 , 122.0 ,  14.0 ,   9.0 ,
@@ -25,8 +24,7 @@ shield_db = {
                     22.0 ,  32.0 , 209.0 ,  35.0 ,   8.0 ,  13.0 ,  
                     33.0 ,  77.0 ,  85.0 , 241.0 ,   9.0 ,  26.0 ]},
 
-            "sc_v6": { "Hybrid_flag": True, "params":[  0 , 231.0 ,   0.0 , 353.1 , 125.1 , 184.8 , 150.2 , 186.8 ,
-                    0 ,      0 ,     0 ,      0,     0 ,     0 ,
+            "sc_v6": { "Hybrid_flag": True, "params":[  231.0 ,   0.0 , 353.1 , 125.1 , 184.8 , 150.2 , 186.8 ,
                     50.0 ,   50.0 , 119.0 , 119.0 ,   2.0 ,   2.0 ,
                     72.0 ,   51.0 ,  29.0 ,  46.0 ,  10.0 ,   7.0 ,
                     45.7 ,   45.7 ,  22.2 ,  22.2 ,  27.0 ,  16.3 ,
@@ -311,7 +309,6 @@ with ConfigRegistry.register_config("basic") as c:
     c.muShield.dZ5 = params[4]
     c.muShield.dZ6 = params[5]
     c.muShield.dZ7 = params[6]
-    c.muShield.dZ8 = params[7]
     c.muShield.dXgap = 0.*u.m
 
 
@@ -319,7 +316,7 @@ with ConfigRegistry.register_config("basic") as c:
             c.muShield.dZ1 + c.muShield.dZ2 +
             c.muShield.dZ3 + c.muShield.dZ4 +
             c.muShield.dZ5 + c.muShield.dZ6 +
-            c.muShield.dZ7 + c.muShield.dZ8
+            c.muShield.dZ7 
     ) + c.muShield.LE
     c.muShield.z = -(c.decayVolume.length + c.muShield.length) / 2.
 

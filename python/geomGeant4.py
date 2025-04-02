@@ -164,10 +164,12 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
        fieldsList.append('HadronAbsorberMap')
 
       if not shipGeo.muShield.WithConstField:
-       field_center, _ = ShieldUtils.find_shield_center(shipGeo)
+       offset, _ , _= ShieldUtils.find_offset(shipGeo) 
+       quadSymm = True      
        fieldMaker.defineFieldMap('muonShieldField', 'files/MuonShieldField.root',
-                                 ROOT.TVector3(0.0, 0.0, field_center), ROOT.TVector3(0.0, 0.0, 0.0), True)
+                                 ROOT.TVector3(0.0, 0.0, offset), ROOT.TVector3(0.0, 0.0, 0.0), quadSymm)
        fieldsList.append('muonShieldField')
+       print("               from files/" + 'muonShieldField.root' + " using offset z = " + str(offset) + " cm")
     # Combine the fields to obtain the global field
       if len(fieldsList) > 1:
        fieldMaker.defineComposite('TotalField', *fieldsList)  #fieldsList MUST have length <=4

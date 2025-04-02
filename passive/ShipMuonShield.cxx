@@ -35,7 +35,7 @@ Double_t floor, const Bool_t WithConstShieldField,  const Bool_t SC_key)
   fWithConstShieldField = WithConstShieldField;
   Double_t LE = 7 * m; //FIXME
   fSC_mag = SC_key;
-  fField = 1.7 * tesla;
+  fField = 1.7;
   dZ1 = in_params[0]; // 0.4 * m if 0.1 cm gap between the target and the absorber;
   dZ2 = in_params[1]; // 2.31 * m;
   dZ3 = in_params[2];
@@ -80,6 +80,8 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
       gGeoManager->MakeArb8(arbName, medium, dZ, corners.data());
   magF->SetLineColor(color);
   if (fWithConstShieldField) {
+      std::cout << "The field is set to " << fField << std::endl;
+      std::cout << "The component of the field in magField is " << magField << std::endl;
       magF->SetField(magField);
   }
   tShield->AddNode(magF, 1, new TGeoTranslation(x_translation, y_translation,
@@ -291,9 +293,8 @@ Int_t ShipMuonShield::Initialize(std::vector<TString> &magnetName,
 
   fieldDirection = {
 FieldDirection::up,   FieldDirection::up,   FieldDirection::up,
-FieldDirection::up,   FieldDirection::up,   FieldDirection::down,
-FieldDirection::down, FieldDirection::down, FieldDirection::down,
-  };
+FieldDirection::up,   FieldDirection::down,   FieldDirection::down,
+FieldDirection::down};
 
   std::vector<Double_t> params;
   params = shield_params;
@@ -322,9 +323,9 @@ FieldDirection::down, FieldDirection::down, FieldDirection::down,
   dZ[0] = dZ1 - zgap / 2;
   Z[0] = zEndOfAbsorb + dZ[0] + zgap;
   dZ[1] = dZ2 - zgap / 2;
-  Z[1] = Z[0] + dZ[0] + dZ[1] + zgap;
+  Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap;
   dZ[2] = dZ3 - zgap / 2;
-  Z[2] = Z[1] + dZ[1] + dZ[2] + 2 * zgap;
+  Z[2] = Z[1] + dZ[1] + dZ[2] + zgap;
   dZ[3] = dZ4 - zgap / 2;
   Z[3] = Z[2] + dZ[2] + dZ[3] + zgap;
   dZ[4] = dZ5 - zgap / 2;
@@ -361,7 +362,7 @@ void ShipMuonShield::ConstructGeometry()
       Double_t TCC8_trench_length = 12 * m;
       Double_t zgap = 10 * cm;
       Double_t absorber_offset = zgap;
-      Double_t absorber_half_length = (dZf[0]) + zgap / 2.;
+      Double_t absorber_half_length = (dZf[0]);
       Double_t z_transition = zEndOfAbsorb + 2 * absorber_half_length + absorber_offset + 14 * cm + TCC8_trench_length;
       auto *rock = new TGeoBBox("rock", 20 * m, 20 * m, TCC8_length / 2. + ECN3_length / 2. + 5 * m);
       auto *muon_shield_cavern = new TGeoBBox("muon_shield_cavern", 4.995 * m, 3.75 * m, TCC8_length / 2.);
@@ -400,6 +401,8 @@ void ShipMuonShield::ConstructGeometry()
             }
         // END
         Double_t ironField_s = fField * fieldScale[nM] * tesla;
+        std::cout << "Magnet name: " << magnetName[nM] << std::endl;
+        std::cout << "Iron field: " << ironField_s << std::endl;
         TGeoUniformMagField *magFieldIron_s = new TGeoUniformMagField(0.,ironField_s_SC,0.);
         TGeoUniformMagField *RetField_s     = new TGeoUniformMagField(0.,-ironField_s,0.);
         TGeoUniformMagField *ConRField_s    = new TGeoUniformMagField(-ironField_s,0.,0.);

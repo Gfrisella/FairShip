@@ -15,8 +15,9 @@ from ShipGeoConfig import AttrDict, ConfigRegistry
 # The first row is the length of the magnets
 # The other rows are the transverse dimensions of the magnets:  dXIn[i], dXOut[i] , dYIn[i], dYOut[i], gapIn[i], gapOut[i].
 shield_db = {
-    "combi": {
+    "combi_rescaled": {
         "Hybrid_flag": False,
+        "WithConstField" : True,
         "params": [
             231.0, 208.0, 207.0, 281.0, 172.82, 212.54, 168.64,
             50.0, 50.0, 119.0, 119.0, 2.0, 2.0, 1.0, 1.0, 50.0, 50.0, 0.0, 0.0, 0.0,
@@ -30,6 +31,7 @@ shield_db = {
     },
     "sc_v6": {
         "Hybrid_flag": True,
+        "WithConstField" : True,
         "params": [
             231.0, 0.0, 353.1, 125.1, 184.8, 150.2, 186.8,
             50.0, 50.0, 119.0, 119.0, 2.0, 2.0, 1.0, 1.0, 50.0, 50.0, 0.0, 0.0, 0.0,
@@ -43,6 +45,7 @@ shield_db = {
     },
     "warm_opt": {
         "Hybrid_flag": False,
+        "WithConstField" : False,
         "params": [
             231.00, 150.52, 169.20, 294.88, 132.53, 299.40, 154.77, 
             50.00, 50.00, 119.00, 119.00, 2.00, 2.00, 1.00,1.0,50.00, 50.00,0.0, 0.00, 45000, 
@@ -344,7 +347,7 @@ with ConfigRegistry.register_config("basic") as c:
     c.hadronAbsorber.z     =  c.muShield.z - c.muShield.length/2. - c.hadronAbsorber.length/2.
 
     c.hadronAbsorber.WithConstField = True
-    c.muShield.WithConstField = True
+    c.muShield.WithConstField = shield_db[shieldName]['WithConstField']
 
     c.target               =  AttrDict(z=0*u.cm)
     c.targetOpt            =  targetOpt

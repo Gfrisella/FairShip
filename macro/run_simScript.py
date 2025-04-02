@@ -471,10 +471,29 @@ if simEngine == "MuonBack":
  options.nEvents = min(options.nEvents,MuonBackgen.GetNevents())
  MCTracksWithHitsOnly = True # otherwise, output file becomes too big
  print('Process ',options.nEvents,' from input file, with Phi random=',options.phiRandom, ' with MCTracksWithHitsOnly',MCTracksWithHitsOnly)
+ 
+ 
+ ## DEVELOPMENT
+ 
+ # implemented to verify if there is the veto
+ thereIstheVeto = False
+ for x in run.GetListOfModules():
+    if 'Veto' == x.GetName(): thereIstheVeto = True
+    
+    
  if options.followMuon :
     options.fastMuon = True
-    modules['Veto'].SetFollowMuon()
- if options.fastMuon :    modules['Veto'].SetFastMuon()
+    if thereIstheVeto:
+      modules['Veto'].SetFollowMuon()
+    else:
+      modules['ScoringPlane0'].SetFollowMuon() 
+ if options.fastMuon :
+    if thereIstheVeto:
+      modules['Veto'].SetFastMuon()
+    else:
+      modules['ScoringPlane0'].SetFastMuon()  # Massi, trying to make FastFollow compatible without tank and bkgtagger...
+      modules['ScoringPlane0'].SetOnlyMuons()
+      print("Massi from run_simScript says: called ScoringPlane0 SetFastMuon() and SetOnlyMuons()") 
 
  # optional, boost gamma2muon conversion
  # ROOT.kShipMuonsCrossSectionFactor = 100.
@@ -545,8 +564,8 @@ if options.debug == 1:
  geomGeant4.printWeightsandFields(onlyWithField = True,\
              exclude=['DecayVolume','Tr1','Tr2','Tr3','Tr4','Veto','Ecal','Hcal','MuonDetector','SplitCal'])
 # Plot the field example
-#fieldMaker.plotField(1, ROOT.TVector3(-9000.0, 6000.0, 50.0), ROOT.TVector3(-300.0, 300.0, 6.0), 'Bzx.png')
-#fieldMaker.plotField(2, ROOT.TVector3(-9000.0, 6000.0, 50.0), ROOT.TVector3(-400.0, 400.0, 6.0), 'Bzy.png')
+fieldMaker.plotField(1, ROOT.TVector3(-9000.0, 6000.0, 50.0), ROOT.TVector3(-300.0, 300.0, 6.0), 'Bzx.png')
+fieldMaker.plotField(2, ROOT.TVector3(-9000.0, 6000.0, 50.0), ROOT.TVector3(-400.0, 400.0, 6.0), 'Bzy.png')
 
 # -----Start run----------------------------------------------------
 run.Run(options.nEvents)

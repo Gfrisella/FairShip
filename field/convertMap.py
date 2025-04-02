@@ -92,9 +92,9 @@ def createRootMap(inFileName, rootFileName, cmScale, storeCoords):
     z0 = 0.5*(rStruct.zMin + rStruct.zMax)
 
     # Use this if we don't want to centre the field map
-    #x0 = 0.0
-    #y0 = 0.0
-    #z0 = 0.0
+    x0 = 0.0
+    y0 = 0.0
+    z0 = 0.0
 
     print(f'Centering field map using co-ordinate shift {x0} {y0} {z0} cm')
 
@@ -234,5 +234,5 @@ def findRanges(inFileName, cmScale):
 
 if __name__ == "__main__":
 
-    run('GoliathFieldMap.txt', 'GoliathFieldMap.root', 0.1, True)
+    run('../files/FieldMap_LFP.txt', '../files/FieldMap_LFP.root', 100, True)
     #run('BFieldTest.txt', 'BFieldTest.root', 1.0)

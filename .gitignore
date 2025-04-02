@@ -57,3 +57,6 @@ lcgenv.sh
 
 # CDB
 conditionsDatabase/**/.cache/
+
+#MS file txt
+files/*.txt

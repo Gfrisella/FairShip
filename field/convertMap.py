@@ -234,5 +234,8 @@ def findRanges(inFileName, cmScale):
 
 if __name__ == "__main__":
 
-    run('../files/FieldMap_LFP.txt', '../files/FieldMap_LFP.root', 100, True)
+    run('../files/Piet_No_line_no_Cavern.txt', '../files/Piet_No_line_no_Cavern.root', 100, True)
+    run('../files/Piet_No_line_with_Cavern.txt', '../files/Piet_No_line_with_Cavern.root', 100, True)
+    run('../files/Piet_line_No_Cavern.txt', '../files/Piet_line_No_Cavern.root', 100, True)
+    run('../files/Piet_line_with_Cavern.txt', '../files/Piet_line_with_Cavern.root', 100, True)
     #run('BFieldTest.txt', 'BFieldTest.root', 1.0)

@@ -390,6 +390,10 @@ void ShipMuonShield::ConstructGeometry()
       std::array<double, 7> fieldScale = {{1., 1., 1., 1., 1., 1., 1.}};
       for (Int_t nM = 0; nM < (nMagnets); nM++) {
 
+        if (dZf[nM] < 1e-5){
+          continue;
+        }
+        
         // SC MAGNET
         if ((dZf[nM] < 1e-5 || nM == 4 ) && fSC_mag) {
               continue;
@@ -420,13 +424,13 @@ void ShipMuonShield::ConstructGeometry()
       // Create the cavern
       std::vector<TGeoTranslation*> mag_trans;
 
-      auto mag2 = new TGeoTranslation("mag2", 0, 0, +dZ1);
+      auto mag2 = new TGeoTranslation("mag2", 0, 0, 0);
       mag2->RegisterYourself();
       mag_trans.push_back(mag2);
 
       // Absorber
 
-      auto abs = new TGeoBBox("absorber",  4.995 * m -0.001*m, 3.75 * m -0.001*m, absorber_half_length - 0.001);
+      auto abs = new TGeoBBox("absorber",  4.995 * m -0.002*m, 3.75 * m, absorber_half_length - 0.001);
       auto *absorber_shift = new TGeoTranslation("absorber_shift", 1.435 * m, 2.05 * m, 0);
       absorber_shift->RegisterYourself();
 

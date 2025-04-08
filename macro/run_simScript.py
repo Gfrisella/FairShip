@@ -9,6 +9,8 @@ import rootUtils as ut
 from ShipGeoConfig import ConfigRegistry
 from argparse import ArgumentParser
 from array import array
+from FairShip.macro.myfunctions import *
+
 DownScaleDiMuon = False
 
 # Default HNL parameters
@@ -148,6 +150,8 @@ parser.add_argument(
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')
 
+parser.add_argument("--Crit",  dest="SaveByCriterion",  help="filter events by criterion", required=False, action="store_true")
+
 options = parser.parse_args()
 
 if options.evtcalc:  simEngine = "EvtCalc"
@@ -189,6 +193,9 @@ if options.thedeccouplings:
   theDecayCouplings = [float(c) for c in options.thedeccouplings.split(",")]
 if options.testFlag:
   inputFile = "$FAIRSHIP/files/Cascade-parp16-MSTP82-1-MSEL4-76Mpot_1_5000.root"
+
+
+SaveByCriterion = options.SaveByCriterion # added by Massi
 
 
 #sanity check
@@ -237,13 +244,47 @@ if options.eventDisplay: tag = tag+'_D'
 if options.dv > 4 : tag = 'conical.'+tag
 if not os.path.exists(options.outputDir):
   os.makedirs(options.outputDir)
-outFile = f"{options.outputDir}/ship.{tag}.root"
+# Massi: change ship.conical*.root filename to be different in case of filtered events:
+finaltag = tag
+if SaveByCriterion: finaltag = tag+'_SaveCrit'
+outFile = f"{options.outputDir}/ship.{finaltag}.root"
 
 # rm older files !!!
 for x in os.listdir(options.outputDir):
-  if not x.find(tag)<0: os.system(f"rm {options.outputDir}/{x}" )
+  if not x.find(finaltag)<0: os.system(f"rm {options.outputDir}/{x}" )
 # Parameter file name
-parFile=f"{options.outputDir}/ship.params.{tag}.root"
+parFile=f"{options.outputDir}/ship.params.{finaltag}.root"
+
+
+
+# HERE TEST BY MASSI:
+# add a user-defined task to the event-loop:
+colnames  = ['sco0_Point','sco1_Point', 'sco2_Point'] # all sco*_Point
+scolnames = ['sco1_Point'] # the selected sco*_Point
+MuonHitsOnly = True
+sXcrit,sYcrit = [250.],[350.] # Xcrit, Ycrit of the selected sco planes
+# ncritlist = [1,2,3,4,5,6,7,8] #ncritlist = [3,4,5]
+direc = os.getcwd()
+Samplesize = 10*0
+# above global stuff is alaso used at the end for smallify function!
+#if simEngine == "MuonBack" and SaveByCriterion: 
+# if SaveByCriterion or smallify: 
+#    print("Massi, from run_simScript.py: smallify output on the fly using SaveByCriterionTask")
+#    for crit in range(0,len(Xcrit)):  # if not MS9, we have 9 sco planes, from 0 to 8
+#        colnames.append( "sco%d"%crit+"_Point")
+#    for ncrit in ncritlist: 
+#        if ncrit < 0 or ncrit > len(ship_geo.ScoPlane_Add)-1: 
+#           print("# Massi, from run_simScript: check your scoring planes exist:",ncritlist,ship_geo.ScoPlane_Add)
+#           sys.exit(-1)
+#    for iz in range(0,len(ship_geo.ScoPlane_Add)): 
+#        if ship_geo.ScoPlane_Add[iz] == 0 and iz in ncritlist: 
+#           print("# Massi, from run_simScript: check your scoring planes are added:",iz,ship_geo.ScoPlane_Add,ncritlist)
+#           sys.exit(-1)
+#    for ncrit in ncritlist: 
+#        scolnames.append( "sco%i"%ncrit+"_Point")
+#        sXcrit.append(Xcrit[ncrit])
+#        sYcrit.append(Ycrit[ncrit])
+
 
 # In general, the following parts need not be touched
 # ========================================================================
@@ -258,6 +299,22 @@ run.SetName(mcEngine)  # Transport engine
 run.SetSink(ROOT.FairRootFileSink(outFile))  # Output file
 run.SetUserConfig("g4Config.C") # user configuration file default g4Config.C
 rtdb = run.GetRuntimeDb()
+
+if SaveByCriterion: 
+   print("# Massi, from run_simScript: -----Add user tasks to run -----------------------------")
+   print("    use the selected colnames with their Xcrit and Ycrit for saving by criterion: ")
+   for kk in range(0,len(scolnames)): print("---> "+scolnames[kk]+"  %f"%sXcrit[kk]+" cm  %f"%sYcrit[kk]+" cm")
+   saveByCriterionTask = SaveByCriterionTask()  # defined in myfunctions
+   saveByCriterionTask.InitializeMembers(direc,scolnames,sXcrit,sYcrit,samplesize=Samplesize,MuonHitsOnly=MuonHitsOnly) 
+  #saveByCriterionTask = SaveByCriterionTask(direc,scolnames,sXcrit,sYcrit,samplesize=Samplesize,MuonHitsOnly=MuonHitsOnly) 
+   run.AddTask(saveByCriterionTask)
+   # calling also saveByCriterionTask.FinishMembers() below, around Finish
+   # END TEST BY MASSI
+   # if does not work, then try to use the C++ way...
+   
+   
+   
+   
 # -----Create geometry----------------------------------------------
 # import shipMuShield_only as shipDet_conf # special use case for an attempt to convert active shielding geometry for use with FLUKA
 # import shipTarget_only as shipDet_conf
@@ -608,6 +665,8 @@ if "P8gen" in globals() :
 print("Output file is ",  outFile)
 print("Parameter file is ",parFile)
 print("Real time ",rtime, " s, CPU time ",ctime,"s")
+
+if SaveByCriterion: saveByCriterionTask.FinishMembers()
 
 # remove empty events
 if simEngine == "MuonBack":

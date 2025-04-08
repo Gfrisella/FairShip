@@ -165,11 +165,32 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
 
       if not shipGeo.muShield.WithConstField:
        offset, _ , _= ShieldUtils.find_offset(shipGeo) 
-       quadSymm = True      
-       fieldMaker.defineFieldMap('muonShieldField', 'files/MuonShieldField.root',
+       quadSymm = True
+       print('Guglielmo, check the Muon Shield field map of :', shipGeo.shieldName) 
+       #print('This is the enviroment:',$FAIRSHIP)  
+       vmc_work_dir = ROOT.gSystem.Getenv("VMCWORKDIR")
+       print("The working directory is : ",vmc_work_dir)     
+       file_name = f"{vmc_work_dir}/files/{shipGeo.shieldName}.root"
+       try:
+          # Check if the file exists by trying to open it
+          file = ROOT.TFile.Open(file_name)
+
+          if file and not file.IsZombie():  # If the file exists and is not corrupted
+            print(f"Muon Shield field map file {file_name} exists.")
+            file_name = f"files/{shipGeo.shieldName}.root"
+            file.Close()
+          else:
+            raise OSError(f"File {file_name} is corrupted or invalid.")
+          
+       except OSError as e:
+         print(f"Error: {e}. Using default file instead.")
+         file_name = 'files/MuonShieldField.root'
+
+      
+       fieldMaker.defineFieldMap('muonShieldField', file_name,
                                  ROOT.TVector3(0.0, 0.0, offset), ROOT.TVector3(0.0, 0.0, 0.0), quadSymm)
        fieldsList.append('muonShieldField')
-       print("               from files/" + 'muonShieldField.root' + " using offset z = " + str(offset) + " cm")
+       print(f"               from {file_name} using offset z = {str(offset)} cm")
     # Combine the fields to obtain the global field
       if len(fieldsList) > 1:
        fieldMaker.defineComposite('TotalField', *fieldsList)  #fieldsList MUST have length <=4

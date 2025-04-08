@@ -62,3 +62,6 @@ conditionsDatabase/**/.cache/
 files/*.txt
 LINK__FF
 LINK_MS8_FF
+LINK*
+LINK_MS
+LINK

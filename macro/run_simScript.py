@@ -9,7 +9,7 @@ import rootUtils as ut
 from ShipGeoConfig import ConfigRegistry
 from argparse import ArgumentParser
 from array import array
-from FairShip.macro.myfunctions import *
+from myfunctions import *
 
 DownScaleDiMuon = False
 

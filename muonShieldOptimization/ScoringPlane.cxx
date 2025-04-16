@@ -293,7 +293,7 @@ void ScoringPlane::Register()
   TString name  = fVetoName+"Point";
   TString title = fVetoName;
   FairRootManager::Instance()->Register(name, title, fScoringPlanePointCollection, kTRUE);
-  std::cout << this->GetName() << ",  Register() says: registered " << fVetoName <<" collection"<<std::endl;
+  // std::cout << this->GetName() << ",  Register() says: registered " << fVetoName <<" collection"<<std::endl;
 }
 
 TClonesArray* ScoringPlane::GetCollection(Int_t iColl) const

@@ -14,7 +14,26 @@ from ShipGeoConfig import AttrDict, ConfigRegistry
 # Here you can taylor the MS geometry, if the MS design is using SC magnet change the Hybrid_flag to True
 # The first row is the length of the magnets
 # The other rows are the transverse dimensions of the magnets:  dXIn[i], dXOut[i] , dYIn[i], dYOut[i], gapIn[i], gapOut[i].
-shield_db = {
+shield_db = { "LFP_4":
+	{"Hybrid_flag": False,
+        "WithConstField" : False,
+        "params": [
+    120.5, 225.4459991455078, 270.72900390625, 291.1570129394531, 195.06961059570312,
+    158.47593688964844, 212.2450408935547, 50.0, 50.0, 119.0, 119.0, 2.0, 2.0, 1.0,
+    1.0, 50.0, 50.0, 0.0, 0.0, 0.0, 69.9538345336914, 69.52962493896484, 9.546708106994629,
+    55.77276611328125, 2.0, 29.381258010864258, 1.0, 1.0, 69.9538345336914, 69.52962493896484,
+    0.0, 0.0, 0.0, 59.36825180053711, 8.082921028137207, 53.299137115478516, 84.96075439453125,
+    2.0, 2.0, 1.0, 1.0, 59.36825180053711, 8.082921028137207, 0.0, 0.0, 0.0, 16.56761932373047,
+    35.95372009277344, 48.76879119873047, 41.04808807373047, 99.79547882080078, 2.0, 1.0, 1.0,
+    16.56761932373047, 35.95372009277344, 0.0, 0.0, 0.0, 5.05019474029541, 46.17500305175781,
+    36.561912536621094, 5.001663684844971, 2.0, 2.0, 1.0, 0.9427613019943237, 5.05019474029541,
+    43.532005310058594, 0.10836227983236313, 0.10836227983236313, 0.0, 34.46073532104492,
+    13.405343055725098, 116.70968627929688, 69.60697937011719, 23.217792510986328, 2.0,
+    0.8213790655136108, 0.973611056804657, 28.305326461791992, 13.051589965820312,
+    0.10344677418470383, 0.10344677418470383, 0.0, 17.186630249023438, 72.10167694091797,
+    64.7842025756836, 127.37654113769531, 2.0026466846466064, 43.253204345703125, 1.0,
+    0.8218560218811035, 17.186630249023438, 59.257198333740234, 0.0, 0.0, 0.0
+]},
     "combi_rescaled": {
         "Hybrid_flag": False,
         "WithConstField" : True,
@@ -423,11 +442,15 @@ with ConfigRegistry.register_config("basic") as c:
             c.muShield.dZ5 + c.muShield.dZ6 +
             c.muShield.dZ7 
     ) + c.muShield.LE
-    c.muShield.z = -(c.decayVolume.length + c.muShield.length) / 2.
+    print("Muon shield length: ", c.muShield.length)
+    c.muShield.length = 3162 #m
+    c.muShield.z = -(c.decayVolume.length + c.muShield.length) / 2. + 39
+    print("Muon shield z in geo_config: ", c.muShield.z)
 
     c.hadronAbsorber              =  AttrDict(z=0*u.cm)
     c.hadronAbsorber.length =     0*u.m # magnetized, counted inside muonshield
     c.hadronAbsorber.z     =  c.muShield.z - c.muShield.length/2. - c.hadronAbsorber.length/2.
+    print("Hadron absorber z in geo_config: ", c.hadronAbsorber.z)
 
     c.hadronAbsorber.WithConstField = True
     c.muShield.WithConstField = shield_db[shieldName]['WithConstField']

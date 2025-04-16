@@ -166,10 +166,11 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
       if not shipGeo.muShield.WithConstField:
        offset, _ , _= ShieldUtils.find_offset(shipGeo) 
        quadSymm = True
-       print('Guglielmo, check the Muon Shield field map of :', shipGeo.shieldName) 
+       print('Guglielmo, check the Muon Shield field map of : \n', shipGeo.shieldName) 
        #print('This is the enviroment:',$FAIRSHIP)  
        vmc_work_dir = ROOT.gSystem.Getenv("VMCWORKDIR")
-       print("The working directory is : ",vmc_work_dir)     
+       print("The working directory is : \n",vmc_work_dir)
+       print()     
        file_name = f"{vmc_work_dir}/files/{shipGeo.shieldName}.root"
        try:
           # Check if the file exists by trying to open it

@@ -42,6 +42,13 @@ class ShipMuonShield : public FairModule
 		  TGeoUniformMagField *magField, TGeoVolume *top,
 		  Double_t x_translation, Double_t y_translation,
 		  Double_t z_translation);
+  
+  void CreateArb8(TString arbName, TGeoMedium *medium,
+        Double_t dZ, std::array<Double_t, 16> corners,
+        Int_t color, TGeoUniformMagField *magField,
+        TGeoVolume *tShield, Double_t x_translation,
+        Double_t y_translation,
+        Double_t z_translation,Bool_t stepGeo);
 
 
   Int_t Initialize(std::vector<TString> &magnetName,

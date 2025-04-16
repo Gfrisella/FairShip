@@ -217,10 +217,10 @@ def configure(run, ship_geo):
         print("From shipDet_conf.py, configure(): add a few scoring planes for muon shield performance study")
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
-        ScoPlane_zpos  = [-5741.9, 2587., -2662 ] # cm
+        ScoPlane_zpos  = [ship_geo.hadronAbsorber.z + 5, ship_geo.hadronAbsorber.z + 8210, ship_geo.hadronAbsorber.z + 3010] #cm  # 2587., -2623 ] # cm
         ScoPlane_Add   = [1, 1, 1] # Add this Scoring Plane (1 or 0)
-        ScoPlane_HalfX = [50., 250., 400] # cm
-        ScoPlane_HalfY = [50., 350., 300] # cm
+        ScoPlane_HalfX = [50., 225., 400] # cm
+        ScoPlane_HalfY = [50., 325., 300] # cm
     for iz in range(0,len(ScoPlane_zpos)):
         if ScoPlane_Add[iz]:
             scoringplane = addScoringPlane(anindex=iz,\

@@ -103,6 +103,10 @@ class SaveByCriterionTask(ROOT.FairTask):
      #    self.FinishMembers()
       def Exec(self,opt):
           self.allevents_counter += 1
+          filename = 'processed_events.txt'
+        # Write it back (overwrite)
+          with open(filename, "w") as f:
+            f.write(str(self.allevents_counter))
          #if self.allevents_counter == 1: print("Exec::SaveByCriterionTask(): this is the first call to Exec()")
           mcApp = ROOT.FairMCApplication.Instance()
          #MCTracks = ioman.GetObject("MCTrack")
@@ -131,16 +135,10 @@ class SaveByCriterionTask(ROOT.FairTask):
                     self.criticalevents_counter += 1
                     break
           if not criticalevent:
-             mcApp.SetSaveCurrentEvent(ROOT.kFALSE);
-             #print('SaveByCriterionTask(): not criticalevent, I do not save.')
+              mcApp.SetSaveCurrentEvent(ROOT.kFALSE)
           else:
-             mcApp.SetSaveCurrentEvent(ROOT.kTRUE);
-             self.savedevents_counter += 1
-             #print('SaveByCriterionTask(): yes criticalevent or random, I save.')
-             #fMC.StopRun()
+              mcApp.SetSaveCurrentEvent(ROOT.kTRUE)
+              self.savedevents_counter += 1
           if self.firstevent: self.firstevent = False
-     #def ExecuteTask(self,opt):
-     #    print("ExecuteTask::SaveByCriterionTask(): call Exec()")
-     #    self.Exec(opt)
 
 

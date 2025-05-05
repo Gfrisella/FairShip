@@ -184,8 +184,7 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
             raise OSError(f"File {file_name} is corrupted or invalid.")
           
        except OSError as e:
-         print(f"Error: {e}. Using default file instead.")
-         file_name = 'files/MuonShieldField.root'
+         raise OSError(f"Error: {e}. Using default file instead.")
 
       
        fieldMaker.defineFieldMap('muonShieldField', file_name,

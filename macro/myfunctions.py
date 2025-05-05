@@ -103,10 +103,10 @@ class SaveByCriterionTask(ROOT.FairTask):
      #    self.FinishMembers()
       def Exec(self,opt):
           self.allevents_counter += 1
-          filename = 'processed_events.txt'
+          #filename = 'processed_events.txt'
         # Write it back (overwrite)
-          with open(filename, "w") as f:
-            f.write(str(self.allevents_counter))
+          #with open(filename, "w") as f:
+            #f.write(str(self.allevents_counter))
          #if self.allevents_counter == 1: print("Exec::SaveByCriterionTask(): this is the first call to Exec()")
           mcApp = ROOT.FairMCApplication.Instance()
          #MCTracks = ioman.GetObject("MCTrack")

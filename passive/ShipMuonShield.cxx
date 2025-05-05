@@ -244,6 +244,8 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
 				  Double_t gap,Double_t gap2, Double_t Z, Bool_t NotMagnet,
           Bool_t SC_key = false)
   {
+    if(SC_key) { dY = dY + 5; }
+
     Double_t coil_gap,coil_gap2;
     Int_t color[4] = {45,31,30,38};
     gap = std::ceil(std::max(100. / dY, gap));
@@ -251,7 +253,7 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
     coil_gap = gap;
     coil_gap2 = gap2;
 
-    Double_t anti_overlap = 0.1; // gap between fields in the
+    Double_t anti_overlap = 0; // gap between fields in the
 						   // corners for mitred joints
 						   // (Geant goes crazy when
 						   // they touch each other)
@@ -310,47 +312,6 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
         dX2 + ratio_yoke_2*dX2 + middleGap2 + gap2,
         -(dY2 + dY_yoke_2)
       };
-      // SC part
-    if(SC_key){
-      cornersMainL = {
-      middleGap, -(dY + 3*dX - anti_overlap),
-      middleGap, dY + 3*dX - anti_overlap,
-      dX + middleGap, dY - anti_overlap,
-      dX + middleGap, -(dY - anti_overlap),
-      middleGap2, -(dY2 + 3*dX2 - anti_overlap),
-      middleGap2, dY2 + 3*dX2 - anti_overlap,
-      dX2 + middleGap2, dY2 - anti_overlap,
-      dX2 + middleGap2, -(dY2 - anti_overlap)
-        };
-
-      cornersTL = {middleGap + dX,
-                    dY,
-                    middleGap,
-                    dY + 3*dX,
-                    4 * dX + middleGap + coil_gap,
-                    dY + 3*dX,
-                    dX + middleGap + coil_gap,
-                    dY,
-                    middleGap2 + dX2,
-                    dY2,
-                    middleGap2,
-                    dY2 + 3*dX2,
-                    4 * dX2 + middleGap2 + coil_gap2,
-                    dY2 + 3*dX2,
-                    dX2 + middleGap2 + coil_gap2,
-                    dY2};
-
-      cornersMainSideL ={
-      dX + middleGap + gap, -(dY - anti_overlap),
-      dX + middleGap + gap, dY - anti_overlap,
-      4 * dX + middleGap + gap, dY + 3*dX - anti_overlap,
-      4 * dX + middleGap + gap, -(dY + 3*dX - anti_overlap),
-      dX2 + middleGap2 + gap2, -(dY2 - anti_overlap),
-      dX2 + middleGap2 + gap2, dY2 - anti_overlap,
-      4 * dX2 + middleGap2 + gap2, dY2 + 3*dX2 - anti_overlap,
-      4 * dX2 + middleGap2 + gap2, -(dY2 + 3*dX2 - anti_overlap)
-      };
-    }
     std::array<Double_t, 16> cornersMainR, cornersCLBA,
        cornersMainSideR, cornersCLTA, cornersCRBA,
        cornersCRTA, cornersTR, cornersBL, cornersBR;
@@ -536,19 +497,16 @@ void ShipMuonShield::ConstructGeometry()
       std::array<double, 7> fieldScale = {{1., 1., 1., 1., 1., 1., 1.}};
       for (Int_t nM = 0; nM < (nMagnets); nM++) {
 
-        if (dZf[nM] < 1e-5){
+        if (dZf[nM] < 1e-5 || dXIn[nM] < 1){
           continue;
         }
         
         // SC MAGNET
-        if ((dZf[nM] < 1e-5 || nM == 4 ) && fSC_mag) {
-              continue;
-            }
-            Double_t ironField_s_SC = fField * fieldScale[nM] * tesla;
-            if (nM == 3 && fSC_mag) {
+        Double_t ironField_s_SC = fField * fieldScale[nM] * tesla;
+        if (nM == 3 && fSC_mag) {
                 Double_t SC_FIELD = 5.1;
                 ironField_s_SC = SC_FIELD * fieldScale[nM] * tesla;
-            }
+        }
         // END
         Double_t ironField_s = fField * fieldScale[nM] * tesla;
         TGeoUniformMagField *magFieldIron_s = new TGeoUniformMagField(0.,ironField_s_SC,0.);

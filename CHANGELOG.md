@@ -94,6 +94,7 @@ it in future.
 * Remove unused straw veto station
 * ShipAna.py: remove broken calorimetry
 * Remove strawtubes_single class
+* feat(geometry): remove TP liquid scintillator variables
 
 ## 25.01
 

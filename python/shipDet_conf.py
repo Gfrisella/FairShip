@@ -26,14 +26,32 @@ def getParameter(x, ship_geo, latestShipGeo):
     return getattr(a, last)
 
 
-def addScoringPlane(anindex=0,xpos=0.0,ypos=0.0,zpos=0.0,xhalfw=500.0,yhalfh=500.0):
+def addScoringPlane(anindex=0,xpos=0.0,ypos=0.0,zpos=0.0,xhalfw=500.0,yhalfh=500.0, medium_name="iron"):
+     """
+     Creates and configures a ScoringPlane object.
+
+     Args:
+         anindex (int): An index used to create unique names for the scoring plane.
+         xpos (float): X-position of the scoring plane in cm.
+         ypos (float): Y-position of the scoring plane in cm.
+         zpos (float): Z-position of the scoring plane in cm.
+         xhalfw (float): Half-width of the scoring plane along X in cm.
+         yhalfh (float): Half-height of the scoring plane along Y in cm.
+         medium_name (str): The name of the material medium for the scoring plane.
+                            Defaults to "iron".
+     Returns:
+         ROOT.ScoringPlane: The configured ScoringPlane object.
+     """
      izstring = "ScoringPlane"+str(anindex)
      # put the 3rd arg as True if you want to stop particles being tracked at this plane
      scoringplane = ROOT.ScoringPlane(izstring, ROOT.kTRUE, ROOT.kFALSE,xhalfw,yhalfh,0.1)
      scoringplane.SetVetoPointName("sco"+str(anindex)+"_")
-     #scoringplane.SetIsLast(ROOT.kFALSE) # irrelevant, just to test the new method in cxx
+     
+     # Set the tailored medium name
+     scoringplane.SetMediumName(medium_name) # This line is new!
+
      scoringplane.SetXYZposition(xpos,ypos,zpos)
-     print("    defined "+izstring+" at x,y,z = "+str(xpos)+" , "+str(ypos)+" , "+str(zpos)+" cm (halfW/halfH = "+str(xhalfw)+" , "+str(yhalfh)+")")
+     print(f"    defined {izstring} at x,y,z = {xpos} , {ypos} , {zpos} cm (halfW/halfH = {xhalfw} , {yhalfh}, medium: {medium_name})")
      return scoringplane
  
  
@@ -225,7 +243,7 @@ def configure(run, ship_geo):
         if ScoPlane_Add[iz]:
             scoringplane = addScoringPlane(anindex=iz,\
                                    xpos=ScoPlane_xpos[iz],ypos=ScoPlane_ypos[iz],zpos=ScoPlane_zpos[iz],\
-                                   xhalfw=ScoPlane_HalfX[iz],yhalfh=ScoPlane_HalfY[iz])
+                                   xhalfw=ScoPlane_HalfX[iz],yhalfh=ScoPlane_HalfY[iz],  medium_name="vacuums")
             detectorList.append(scoringplane)
         else:
             print("... ScoringPlane"+str(iz)+" is not to be defined")

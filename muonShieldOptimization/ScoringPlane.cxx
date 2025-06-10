@@ -56,7 +56,9 @@ ScoringPlane::ScoringPlane()
     fVetoName("veto"),
     fLx(999.9), // cm
     fLy(999.9), // cm
-    fLz(000.1)  // cm
+    fLz(000.1),  // cm
+    fMediumName("vacuums") // Initialize fMediumName to a default
+
 {}
 
 ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetector)
@@ -81,7 +83,9 @@ ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetecto
     fVetoName("veto"),
     fLx(999.9), // cm
     fLy(999.9), // cm
-    fLz(000.1)  // cm
+    fLz(000.1),  // cm
+    fMediumName("vacuums") // Initialize fMediumName to a default
+
 {}
 
 ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetector,
@@ -104,7 +108,9 @@ ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetecto
     fLastDetector(islastdetector),
     fFastMuon(kFALSE),
     fFollowMuon(kFALSE),
-    fVetoName("veto")
+    fVetoName("veto"),
+    fMediumName("vacuums") // Initialize fMediumName to a default
+
 {
     fLx = Lx; // cm
     fLy = Ly; // cm
@@ -197,10 +203,28 @@ void ScoringPlane::ConstructGeometry()
    static FairGeoMedia *media=geoFace->getMedia();
    static FairGeoBuilder *geoBuild=geoLoad->getGeoBuilder();
 
-   FairGeoMedium *ShipMedium=media->getMedium("vacuums");
-   TGeoMedium* vac=gGeoManager->GetMedium("vacuums");
-   if (vac==NULL) geoBuild->createMedium(ShipMedium);
-   vac =gGeoManager->GetMedium("vacuums");
+  //  FairGeoMedium *ShipMedium=media->getMedium("vacuums");
+  //  TGeoMedium* vac=gGeoManager->GetMedium("vacuums");
+  //  if (vac==NULL) geoBuild->createMedium(ShipMedium);
+  //  vac =gGeoManager->GetMedium("vacuums");
+  
+   // Use the member variable fMediumName to get the tailored medium
+   FairGeoMedium *shipMedium = media->getMedium(fMediumName);
+   TGeoMedium* vac = gGeoManager->GetMedium(fMediumName);
+
+   if (vac == NULL) {
+      std::cout << this->GetName() << ", ConstructGeometry(): Creating medium '" << fMediumName << "'" << std::endl;
+      geoBuild->createMedium(shipMedium);
+   }
+   vac = gGeoManager->GetMedium(fMediumName); // Re-get it to ensure it's loaded
+
+   if (vac == NULL) {
+      std::cerr << this->GetName() << ", ConstructGeometry(): ERROR - Medium '" << fMediumName << "' could not be created or retrieved!" << std::endl;
+      // Handle error: perhaps fall back to a default medium or exit
+      return;
+   }
+
+
    TGeoVolume *top=gGeoManager->GetTopVolume();
    TGeoNavigator* nav = gGeoManager->GetCurrentNavigator();
    Double_t xLoc,yLoc,zLoc;

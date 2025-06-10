@@ -7,6 +7,7 @@
 #include "TGeoVolume.h"
 #include "vetoPoint.h"
 #include "TNtuple.h"
+#include "TString.h"
 #include <map>
 
 class FairVolume;
@@ -60,6 +61,11 @@ class ScoringPlane: public FairDetector
     /** The following methods can be implemented if you need to make
      *  any optional action in your detector during the transport.
     */
+
+    void SetMediumName(const char* name) {
+        fMediumName = name;
+    }
+
 
     virtual void   CopyClones( TClonesArray* cl1,  TClonesArray* cl2 ,
                                Int_t offset) {;}
@@ -115,6 +121,10 @@ class ScoringPlane: public FairDetector
     TFile* fout; //!
     TClonesArray* fElectrons; //!
     Int_t index;
+
+    // NEW: Member variable for the tailored medium name
+    TString     fMediumName;
+
     /** container for data points */
     TClonesArray*  fScoringPlanePointCollection;
     ClassDef(ScoringPlane, 0)

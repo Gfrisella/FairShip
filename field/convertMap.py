@@ -234,14 +234,5 @@ def findRanges(inFileName, cmScale):
 
 if __name__ == "__main__":
 
-    #run('../files/Piet_No_line_no_Cavern.txt', '../files/Piet_No_line_no_Cavern.root', 100, True)
-    #run('../files/Piet_No_line_with_Cavern.txt', '../files/Piet_No_line_with_Cavern.root', 100, True)
-    #run('../files/Piet_line_No_Cavern.txt', '../files/Piet_line_No_Cavern.root', 100, True)
-    #run('../files/Piet_line_with_Cavern.txt', '../files/Piet_line_with_Cavern.root', 100, True)
-    #run('../files/LFP_1.txt', '../files/LFP_1.root', 100, True)
-    #run('../files/LFP_2.txt', '../files/LFP_2.root', 100, True)
-    #run('../files/LFP_3.txt', '../files/LFP_3.root', 100, True)
-    #run('../files/LFP_5.txt', '../files/LFP_5.root', 100, True)
-    run('../files/sc_v6_old.txt', '../files/sc_v6_old.root', 100, True)
-    #run('../files/SC_1.txt', '../files/SC_1.root', 100, True)
- #run('BFieldTest.txt', 'BFieldTest.root', 1.0)
+    run('../files/LFP_5_v2.txt', '../files/LFP_5_v2.root', 100, True)
+

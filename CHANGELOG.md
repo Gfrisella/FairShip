@@ -46,6 +46,7 @@ it in future.
 * fix(shipDet_conf.py): changing paths to yaml files to more pythonic (```os.path.join()``` now)
 * Fix splitcal strip dimensions and number of modules
 * fix: Ensure the web viewer is disabled when checking for geometry overlaps (workaround for https://github.com/root-project/root/issues/18881)
+* Fix: Field direction of first magnet section 2 was wrong
 
 ### Changed
 
@@ -67,6 +68,9 @@ it in future.
 * feat(geometry): Make SplitCal the default calorimeter
 * Resize SplitCal to 4×6 m²
 * feat(geometry): Define target configuration in yaml
+* Defined as input flag `fWithConstShieldFiel` for MS desing in `geometry_config.py`
+* MS design have B field as parameter
+* Changed the parametrization of the field in `ShipMuonShield.cxx` 
 
 ### Removed
 

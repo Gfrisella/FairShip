@@ -57,7 +57,10 @@ ScoringPlane::ScoringPlane()
     fLx(999.9), // cm
     fLy(999.9), // cm
     fLz(000.1),  // cm
-    fMediumName("vacuums") // Initialize fMediumName to a default
+    fMediumName("vacuums"), // Initialize fMediumName to a default
+    fShapeType("Box"), // NEW: Default to "Box"
+    fD_Z_Arb8(0.0), // NEW: Initialize Arb8 dz
+    fArb8Corners{{0.0}} // NEW: Initialize Arb8 corners with zeros
 
 {}
 
@@ -84,8 +87,10 @@ ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetecto
     fLx(999.9), // cm
     fLy(999.9), // cm
     fLz(000.1),  // cm
-    fMediumName("vacuums") // Initialize fMediumName to a default
-
+    fMediumName("vacuums"), // Initialize fMediumName to a default
+    fShapeType("Box"), // NEW: Default to "Box"
+    fD_Z_Arb8(0.0), // NEW: Initialize Arb8 dz
+    fArb8Corners{{0.0}} // NEW: Initialize Arb8 corners with zeros
 {}
 
 ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetector,
@@ -109,7 +114,10 @@ ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetecto
     fFastMuon(kFALSE),
     fFollowMuon(kFALSE),
     fVetoName("veto"),
-    fMediumName("vacuums") // Initialize fMediumName to a default
+    fMediumName("vacuums"), // Initialize fMediumName to a default
+    fShapeType("Box"), // NEW: Default to "Box"
+    fD_Z_Arb8(0.0), // NEW: Initialize Arb8 dz
+    fArb8Corners{{0.0}} // NEW: Initialize Arb8 corners with zeros
 
 {
     fLx = Lx; // cm
@@ -247,10 +255,31 @@ void ScoringPlane::ConstructGeometry()
    xLoc = fxPos; // use external input
    yLoc = fyPos; // use external input
    zLoc = fzPos; // use external input
+
+   // Declare sensPlane here so it's visible to the entire function scope
+   TGeoVolume *sensPlane = nullptr;
    TString myname(this->GetName());
-   TString boxname( myname+"_box");
-   TGeoVolume *sensPlane = gGeoManager->MakeBox(boxname,vac,fLx,fLy,fLz);
-   sensPlane->SetLineColor(kBlue-10);
+   TString shapename_prefix(myname); // Use a prefix for shapenames
+
+   if (fShapeType == "Box") {
+       sensPlane = gGeoManager->MakeBox(shapename_prefix+"_box", vac, fLx, fLy, fLz);
+       cout << this->GetName() << ", ConstructGeometry(): Created Box with Lx=" << fLx << ", Ly=" << fLy << ", Lz=" << fLz << endl;
+   } else if (fShapeType == "Arb8") { // Handle Arb8 shape
+       sensPlane = gGeoManager->MakeArb8(shapename_prefix+"_arb8", vac, fD_Z_Arb8, fArb8Corners.data());
+       cout << this->GetName() << ", ConstructGeometry(): Created Arb8 with dz=" << fD_Z_Arb8 << " and custom corners." << endl;
+   } else {
+       std::cerr << this->GetName() << ", ConstructGeometry(): ERROR - Unknown shape type '" << fShapeType << "'. Using default Box." << std::endl;
+       sensPlane = gGeoManager->MakeBox(shapename_prefix+"_err", vac, fLx, fLy, fLz); // Fallback to Box
+   }
+
+   if (fMediumName.EqualTo("vacuums")) {
+      sensPlane->SetLineColor(kBlue - 10);
+   } else if (fMediumName.EqualTo("helium")) {
+      sensPlane->SetLineColor(kGreen);
+   } else {
+      // Default color if no specific material match
+      sensPlane->SetLineColor(kGray);
+   }
 /*
    if (nav->cd("/MuonShieldArea_1/")){
       nav->cd("/MuonShieldArea_1/");

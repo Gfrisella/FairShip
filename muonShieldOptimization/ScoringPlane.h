@@ -9,6 +9,7 @@
 #include "TNtuple.h"
 #include "TString.h"
 #include <map>
+#include <array>
 
 class FairVolume;
 class TClonesArray;
@@ -66,6 +67,13 @@ class ScoringPlane: public FairDetector
         fMediumName = name;
     }
 
+    // Setter for the shape type (e.g., "Box", "Trapezoid")
+    void SetShapeType(const char* type) { fShapeType = type; }
+
+    void SetArb8Dimensions(Double_t dZ_arb8, const std::array<Double_t, 16>& corners_arb8) {
+        fD_Z_Arb8 = dZ_arb8;
+        fArb8Corners = corners_arb8;
+    }
 
     virtual void   CopyClones( TClonesArray* cl1,  TClonesArray* cl2 ,
                                Int_t offset) {;}
@@ -135,6 +143,13 @@ class ScoringPlane: public FairDetector
     Double_t     fLz;      //!  z full extent in cm 
 
     TString fVetoName;
+
+    // Member variables for shape type and trapezoid dimensions
+    TString     fShapeType;     // "Box" or "Arb8"
+    Double_t                fD_Z_Arb8;      // Half-length along Z for Arb8
+    std::array<Double_t, 16> fArb8Corners;  // 8 (x,y) corners for front and 8 (x,y) for back face
+
+
 };
 
 #endif //SCORINGPLANE_H

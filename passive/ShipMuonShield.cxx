@@ -341,7 +341,7 @@ void ShipMuonShield::ConstructGeometry()
     InitMedium("Concrete");
     TGeoMedium *concrete  =gGeoManager->GetMedium("Concrete");
     InitMedium("copper");
-    TGeoMedium *concrete  =gGeoManager->GetMedium("copper");
+    TGeoMedium *copper  =gGeoManager->GetMedium("copper");
 
       std::vector<TString> magnetName;
       std::vector<FieldDirection> fieldDirection;

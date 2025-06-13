@@ -20,7 +20,6 @@ class ShipMuonShield : public FairModule
 {
   public:
     ShipMuonShield(std::vector<double> in_params,
-                   Double_t floor,
                    Double_t z,
                    const Bool_t WithConstShieldField,
                    const Bool_t SC_key);
@@ -29,14 +28,10 @@ class ShipMuonShield : public FairModule
     void ConstructGeometry();
   ClassDef(ShipMuonShield, 4)
 
-      protected
-      :
+  protected:
 
-      Double_t fMuonShieldLength
-      , fField
-      , HA_field;   // FIXME: HA_field to be removed in the next workshop meeting
-    Double_t fFloor;
-    Double_t dZ0, dZ1, dZ2, dZ3, dZ4, dZ5, dZ6, dZ7, dXgap, zEndOfAbsorb;
+    Double_t fMuonShieldHalfLength;   // FIXME: HA_field to be removed in the next workshop meeting
+    Double_t dZ0, dZ1, dZ2, dZ3, dZ4, dZ5, dZ6, dZ7, dXgap, zEndOfProxShield;
     Int_t InitMedium(TString name);
     Bool_t fWithConstShieldField;
     Bool_t fSC_mag;

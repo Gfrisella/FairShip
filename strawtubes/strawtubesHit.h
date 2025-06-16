@@ -1,16 +1,14 @@
-#ifndef STRAWTUBESHIT_H
-#define STRAWTUBESHIT_H 1
-
+#ifndef STRAWTUBES_STRAWTUBESHIT_H_
+#define STRAWTUBES_STRAWTUBESHIT_H_ 1
 
 #include "ShipHit.h"
-#include "strawtubesPoint.h"
 #include "TObject.h"
 #include "TVector3.h"
+#include "strawtubesPoint.h"
 
 class strawtubesHit : public ShipHit
 {
   public:
-
     /** Default constructor **/
     strawtubesHit();
 
@@ -21,26 +19,29 @@ class strawtubesHit : public ShipHit
      **/
     strawtubesHit(Int_t detID, Float_t tdc);
     strawtubesHit(strawtubesPoint* p, Double_t t0);
-    void StrawEndPoints(TVector3 &vbot, TVector3 &vtop);
-/** Destructor **/
+    /** Destructor **/
     virtual ~strawtubesHit();
+
+    /** Accessors **/
+    Int_t GetStationNumber();
+    Int_t GetViewNumber();
+    Int_t GetLayerNumber();
+    Int_t GetStrawNumber();
 
     /** Output to screen **/
     virtual void Print() const;
-    Float_t GetTDC() const {return fdigi;}
-    void setInvalid() {flag = false;}
-    bool isValid() const {return flag;}
+    Float_t GetTDC() const { return fdigi; }
+    void setInvalid() { flag = false; }
+    bool isValid() const { return flag; }
+
+    /** Copy constructor **/
+    strawtubesHit(const strawtubesHit& point) = default;
+    strawtubesHit& operator=(const strawtubesHit& point) = default;
 
   private:
-    /** Copy constructor **/
-    strawtubesHit(const strawtubesHit& point);
-    strawtubesHit operator=(const strawtubesHit& point);
-
     Float_t flag;   ///< flag
 
-    ClassDef(strawtubesHit,3);
-
-
+    ClassDef(strawtubesHit, 5);
 };
 
-#endif
+#endif   // STRAWTUBES_STRAWTUBESHIT_H_

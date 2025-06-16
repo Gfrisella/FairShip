@@ -39,37 +39,23 @@ inputFile    = "/eos/experiment/ship/data/Charm/Cascade-parp16-MSTP82-1-MSEL4-97
 defaultInputFile = True
 
 globalDesigns = {
-     '2016' : {
-          'dy' : 10.,
-          'dv' : 5,
-          'ds' : 7,
-          'nud' : 1,
-          'caloDesign' : 0,
-          'strawDesign' : 4
-     }, '2018' : {
-          'dy' : 10.,
+     '2023' : {
+          'dy' : 6.,
           'dv' : 6,
-          'ds' : 9,
-          'nud' : 3,
+          'nud' : 4,
           'caloDesign' : 3,
           'strawDesign' : 10
-     }, '2022' : {
-          'dy' : 8.,
-          'dv' : 6,
-          'ds' : 9,
-          'nud' : 3,
-          'caloDesign' : 3,
-          'strawDesign' : 10
-     }, '2023' : {
+     },
+     '2025' : {
           'dy' : 6.,
           'dv' : 6,
           'ds' : 8,
           'nud' : 4,
-          'caloDesign' : 3,
+          'caloDesign' : 2,
           'strawDesign' : 10
-     }
+     },
 }
-default = '2023'
+default = '2025'
 
 parser = ArgumentParser()
 group = parser.add_mutually_exclusive_group()
@@ -112,24 +98,23 @@ parser.add_argument("-o", "--output",dest="outputDir",  help="Output directory",
 parser.add_argument("-Y",        dest="dy",  help="max height of vacuum tank", required=False, default=globalDesigns[default]['dy'])
 parser.add_argument("--tankDesign", dest="dv",      help="4=TP elliptical tank design, 5 = optimized conical rectangular design, 6=5 without segment-1"\
                                             ,required=False, default=globalDesigns[default]['dv'], type=int)
-parser.add_argument("--muShieldDesign", dest="ds",  help="7=short magnet design, 9=optimised with T4 as constraint, 8=requires config file\
-                                            ,10=with field map for hadron absorber", required=False, choices=range(7,11), default=globalDesigns[default]['ds'], type=int)
 parser.add_argument("--nuTauTargetDesign", dest="nud"\
-  ,help="0=TP, 1=new magnet option for short muon shield, 2= no magnet surrounding neutrino detector, 3= emulsion spectrometer and muon filter as in CDS, 4= not magnetized target and muon spectrometer for ECN3",required=False, default=globalDesigns[default]['nud'], type=int)
+  ,help="3: emulsion spectrometer and muon filter as in CDS, 4: not magnetized target and muon spectrometer for ECN3", default=globalDesigns[default]['nud'], type=int, choices=[3,4])
 parser.add_argument("--caloDesign",
                     help="0=ECAL/HCAL TP 2=splitCal  3=ECAL/ passive HCAL",
                     default=globalDesigns[default]['caloDesign'],
                     type=int,
                     choices=[0,2,3])
-parser.add_argument("--strawDesign", dest="strawDesign", help="simplistic tracker design,  4=sophisticated straw tube design, horizontal wires (default), 10=2cm straw"
-                                            ,required=False, default=globalDesigns[default]['strawDesign'], type=int)
+parser.add_argument("--strawDesign", help="Tracker design: 4=sophisticated straw tube design, horizontal wires; 10=straw of 2 cm diameter (default)",
+                    default=globalDesigns[default]['strawDesign'], type=int, choices=[4,10])
 parser.add_argument("-F",        dest="deepCopy",  help="default = False: copy only stable particles to stack, except for HNL events", required=False, action="store_true")
 parser.add_argument("-t", "--test", dest="testFlag",  help="quick test", required=False,action="store_true")
 parser.add_argument("--dry-run", dest="dryrun",  help="stop after initialize", required=False,action="store_true")
 parser.add_argument("-D", "--display", dest="eventDisplay", help="store trajectories", required=False, action="store_true")
-parser.add_argument("--shieldName", help="The name of the SC shield in the database. SC default: sc_v6, Warm default: combi", default="Opti")
+parser.add_argument("--shieldName", help="The name of the SC shield in the database. SC default: sc_v6, Warm default: warm_opt", default="sc_v6", choices=["sc_v6", "warm_opt"])
 parser.add_argument("--MesonMother",   dest="MM",  help="Choose DP production meson source: pi0, eta, omega, eta1, eta11", required=False,  default='pi0')
 parser.add_argument("--debug",  help="1: print weights and field 2: make overlap check", required=False, default=0, type=int, choices=range(0,3))
+parser.add_argument("--field_map", default=None, help="Specify spectrometer field map.")
 parser.add_argument(
     "--helium",
     dest="decayVolMed",
@@ -148,6 +133,7 @@ parser.add_argument(
 )
 
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
+parser.add_argument("--SND_design", help="Choose SND design among [1,2,...]. 1: old version, 2: MTC", type=int, choices=[1, 2], default=1)
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')
 
 parser.add_argument("--Crit",  dest="SaveByCriterion",  help="filter events by criterion", required=False, action="store_true")
@@ -219,14 +205,11 @@ if (simEngine == "Ntuple" or simEngine == "MuonBack") and defaultInputFile :
   sys.exit()
 ROOT.gRandom.SetSeed(options.theSeed)  # this should be propagated via ROOT to Pythia8 and Geant4VMC
 shipRoot_conf.configure(0)     # load basic libraries, prepare atexit for python
-# - muShieldDesign = 7  # 7 = short design+magnetized hadron absorber
-# - targetOpt      = 5  # 0=solid   >0 sliced, 5: 5 pieces of tungsten, 4 H20 slits, 17: Mo + W +H2O (default)
-#   nuTauTargetDesign = 0 # 0 = TP, 1 = NEW with magnet, 2 = NEW without magnet, 3 = 2018 design
+#   nuTauTargetDesign = 3 #3 = 2018 design, 4 = not magnetized target + spectrometer
 ship_geo = ConfigRegistry.loadpy(
      "$FAIRSHIP/geometry/geometry_config.py",
      Yheight=options.dy,
      tankDesign=options.dv,
-     muShieldDesign=options.ds,
      nuTauTargetDesign=options.nud,
      CaloDesign=options.caloDesign,
      strawDesign=options.strawDesign,
@@ -234,6 +217,7 @@ ship_geo = ConfigRegistry.loadpy(
      shieldName=options.shieldName,
      DecayVolumeMedium=options.decayVolMed,
      SND=options.SND,
+     SND_design=options.SND_design
 )
 
 # Output file name, add dy to be able to setup geometry with ambiguities.
@@ -440,6 +424,8 @@ if simEngine == "Nuage":
  primGen.SetTarget(0., 0.)
  Nuagegen = ROOT.NuageGenerator()
  Nuagegen.EnableExternalDecayer(1) #with 0 external decayer is disable, 1 is enabled
+
+ #CAMM - This is broken now, need info from dedicated SND geo...
  print('Nuage position info input=',ship_geo.EmuMagnet.zC-ship_geo.NuTauTarget.zdim, ship_geo.EmuMagnet.zC+ship_geo.NuTauTarget.zdim)
  #--------------------------------
  #to Generate neutrino interactions in the whole neutrino target
@@ -464,6 +450,7 @@ if simEngine == "Nuage":
  options.nEvents = min(options.nEvents,Nuagegen.GetNevents())
  run.SetPythiaDecayer("DecayConfigNuAge.C")
  print('Generate ',options.nEvents,' with Nuage input', ' first event',options.firstEvent)
+ #-CAMM end broken part
 # -----Neutrino Background------------------------
 if simEngine == "Genie":
 # Genie
@@ -613,7 +600,9 @@ import geomGeant4
 # any field maps, or defining if any volumes feel only the local or local+global field.
 # For now, just keep the fields already defined by the C++ code, i.e comment out the fieldMaker
 if hasattr(ship_geo.Bfield,"fieldMap"):
-      fieldMaker = geomGeant4.addVMCFields(ship_geo, '', True)
+     if options.field_map:
+          ship_geo.Bfield.fieldMap = options.field_map
+     fieldMaker = geomGeant4.addVMCFields(ship_geo, verbose=True)
 
 # Print VMC fields and associated geometry objects
 if options.debug == 1:
@@ -642,6 +631,7 @@ saveBasicParameters.execute(f"{options.outputDir}/geofile_full.{tag}.root",ship_
 
 # checking for overlaps
 if options.debug == 2:
+ ROOT.gROOT.SetWebDisplay("off")  # Workaround for https://github.com/root-project/root/issues/18881
  fGeo = ROOT.gGeoManager
  fGeo.SetNmeshPoints(10000)
  fGeo.CheckOverlaps(0.1)  # 1 micron takes 5minutes
@@ -711,6 +701,8 @@ if simEngine == "MuonBack":
  branches.Add(ROOT.TObjString('smuonPoint'))
  branches.Add(ROOT.TObjString('TimeDetPoint'))
  branches.Add(ROOT.TObjString('MCEventHeader'))
+ branches.Add(ROOT.TObjString('UpstreamTaggerPoint'))
+ branches.Add(ROOT.TObjString('MTCdetPoint'))
  branches.Add(ROOT.TObjString('sGeoTracks'))
 
  sTree.AutoSave()

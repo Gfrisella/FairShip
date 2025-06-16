@@ -76,6 +76,12 @@ it in future.
 * `fWithConstShieldFiel` Defined as input flag for MS desing in `geometry_config.py`
 * MS design have B field as parameter
 * Changed the parametrization of the field in `ShipMuonShield.cxx`
+<<<<<<< HEAD
+=======
+* feat(geometry): Change coordinate system to z_0 := start of target
+* Insert Proximity shield in the geometry
+* Removed old stuff legacy in `shipMuonShield.cxx` (like LE and fFloor)
+>>>>>>> eb637508fad4f2e5cdb97ee12716362bce0e2e3f
 
 ### Removed
 
@@ -93,6 +99,10 @@ it in future.
 * Remove unused straw veto station
 * ShipAna.py: remove broken calorimetry
 * Remove strawtubes_single class
+<<<<<<< HEAD
+=======
+* feat(geometry): remove TP liquid scintillator variables
+>>>>>>> eb637508fad4f2e5cdb97ee12716362bce0e2e3f
 
 ## 25.01
 

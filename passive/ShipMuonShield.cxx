@@ -237,6 +237,7 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
 				  Double_t middleGap,Double_t middleGap2,
 				  Double_t gap,Double_t gap2, Double_t Z, Bool_t NotMagnet,
           Bool_t SC_key = false)
+          Bool_t SC_key = false)
   {
     if(SC_key) { dY = dY + 5; }
 

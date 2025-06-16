@@ -54,8 +54,8 @@ def find_shield_center(ship_geo):
     dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
     Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
 
-    dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
-    Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
+    dZ[6] = ship_geo.muShield.dZ7 - zgap / 2;
+    Z[6] = Z[5] + dZ[5] + dZ[6] + zgap;
 
 
     shield_center = (Z[1] + Z[6] + dZ[6] - dZ[1]) / 2

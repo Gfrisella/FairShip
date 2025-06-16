@@ -7,7 +7,8 @@ import global_variables
 ReconstructibleMCTracks = []
 theTracks = []
 
-r_scale = global_variables.ShipGeo.strawtubes.InnerStrawDiameter / 1.975
+r_scale = 1.
+max_x = global_variables.ShipGeo.strawtubes.StrawLength # == 200 * u.cm
 
 def initialize(fgeo):
     pass
@@ -352,7 +353,7 @@ def fast_hough_pat_rec_stereo_views(SmearedHits_stereo, recognized_tracks_y, min
                 if ahit2['digiHit'] in used_hits:
                     continue
 
-                if abs(ahit1['zx_projection']) > 300 or abs(ahit2['zx_projection']) > 300:
+                if abs(ahit1['zx_projection']) > max_x or abs(ahit2['zx_projection']) > max_x:
                     continue
 
                 k_seed = 1. * (ahit2['zx_projection'] - ahit1['zx_projection']) / (ahit2['z'] - ahit1['z'])
@@ -369,7 +370,7 @@ def fast_hough_pat_rec_stereo_views(SmearedHits_stereo, recognized_tracks_y, min
                     if ahit3['digiHit'] in used_hits:
                         continue
 
-                    if abs(ahit3['zx_projection']) > 300:
+                    if abs(ahit3['zx_projection']) > max_x:
                         continue
 
                     layer3 = ahit3['detID'] // 10000
@@ -613,7 +614,7 @@ def artificial_retina_pat_rec_stereo_views(SmearedHits_stereo, recognized_tracks
         for ahit in SmearedHits_stereo:
             if ahit['digiHit'] in used_hits:
                 continue
-            if abs(ahit['zx_projection']) > 300:
+            if abs(ahit['zx_projection']) > max_x:
                 continue
             hits_z.append(ahit['z'])
             hits_x.append(ahit['zx_projection'])
@@ -636,7 +637,7 @@ def artificial_retina_pat_rec_stereo_views(SmearedHits_stereo, recognized_tracks
             if ahit3['digiHit'] in used_hits:
                 continue
 
-            if abs(ahit3['zx_projection']) > 300:
+            if abs(ahit3['zx_projection']) > max_x:
                 continue
 
             layer3 = ahit3['detID'] // 10000
@@ -799,11 +800,12 @@ def hits_split(smeared_hits):
         ahit = smeared_hits[i_hit]
 
         detID = ahit['detID']
-        statnb, vnb, pnb, lnb, snb = decodeDetectorID(detID)
-        is_y12 = ((statnb == 1) + (statnb == 2)) * ((vnb == 0) + (vnb == 3))
-        is_stereo12 = ((statnb == 1) + (statnb == 2)) * ((vnb == 1) + (vnb == 2))
-        is_y34 = ((statnb == 3) + (statnb == 4)) * ((vnb == 0) + (vnb == 3))
-        is_stereo34 = ((statnb == 3) + (statnb == 4)) * ((vnb == 1) + (vnb == 2))
+        decode = global_variables.modules["Strawtubes"].StrawDecode(detID)
+        # StrawDecode returns a tuple of (statnb, vnb, lnb, snb).
+        is_y12 = ((decode[0] == 1) + (decode[0] == 2)) * ((decode[1] == 0) + (decode[1] == 3))
+        is_stereo12 = ((decode[0] == 1) + (decode[0] == 2)) * ((decode[1] == 1) + (decode[1] == 2))
+        is_y34 = ((decode[0] == 3) + (decode[0] == 4)) * ((decode[1] == 0) + (decode[1] == 3))
+        is_stereo34 = ((decode[0] == 3) + (decode[0] == 4)) * ((decode[1] == 1) + (decode[1] == 2))
 
         if is_y12:
             smeared_hits_12y.append(ahit)
@@ -911,42 +913,8 @@ def tracks_combination_using_extrapolation(recognized_tracks_12, recognized_trac
             atrack['hits_y34'] = recognized_tracks_34[i_34]['hits_y']
             atrack['hits_stereo34'] = recognized_tracks_34[i_34]['hits_stereo']
             recognized_tracks_combo.append(atrack)
-            recognized_tracks_combo.append(atrack)
 
     return recognized_tracks_combo
-
-
-
-def decodeDetectorID(detID):
-    """
-    Decodes detector ID.
-
-    Parameters
-    ----------
-    detID : int or array-like
-        Detector ID values.
-
-    Returns
-    -------
-    statnb : int or array-like
-        Station numbers.
-    vnb : int or array-like
-        View numbers.
-    pnb : int or array-like
-        Plane numbers.
-    lnb : int or array-like
-        Layer numbers.
-    snb : int or array-like
-        Straw tube numbers.
-    """
-
-    statnb = detID // 10000000
-    vnb = (detID - statnb * 10000000) // 1000000
-    pnb = (detID - statnb * 10000000 - vnb * 1000000) // 100000
-    lnb = (detID - statnb * 10000000 - vnb * 1000000 - pnb * 100000) // 10000
-    snb = detID - statnb * 10000000 - vnb * 1000000 - pnb * 100000 - lnb * 10000 - 2000
-
-    return statnb, vnb, pnb, lnb, snb
 
 
 
@@ -1021,7 +989,7 @@ def pat_rec_stereo_views(SmearedHits_stereo, recognized_tracks_y, min_hits):
                 if ahit2['digiHit'] in used_hits:
                     continue
 
-                if abs(ahit1['zx_projection']) > 300 or abs(ahit2['zx_projection']) > 300:
+                if abs(ahit1['zx_projection']) > max_x or abs(ahit2['zx_projection']) > max_x:
                     continue
 
                 k_seed = 1. * (ahit2['zx_projection'] - ahit1['zx_projection']) / (ahit2['z'] - ahit1['z'])
@@ -1038,7 +1006,7 @@ def pat_rec_stereo_views(SmearedHits_stereo, recognized_tracks_y, min_hits):
                     if ahit3['digiHit'] in used_hits:
                         continue
 
-                    if abs(ahit3['zx_projection']) > 300:
+                    if abs(ahit3['zx_projection']) > max_x:
                         continue
 
                     layer3 = ahit3['detID'] // 10000

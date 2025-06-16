@@ -426,9 +426,9 @@ FieldDirection::down};
     midGapOut[i] = params[offset + i * nParams + 11];
     NI[i] = params[offset + i * nParams + 12];
   }
-
+  Double_t Proximity_Shielding_length = 0*45.75*cm;
   dZ[0] = dZ1 - zgap / 2;
-  Z[0] = zEndOfAbsorb + dZ[0] + zgap;
+  Z[0] = zEndOfAbsorb + dZ[0] + zgap + Proximity_Shielding_length;
   dZ[1] = dZ2 - zgap / 2;
   Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap;
   dZ[2] = dZ3 - zgap / 2;
@@ -470,7 +470,8 @@ void ShipMuonShield::ConstructGeometry()
       Double_t zgap = 10 * cm;
       Double_t absorber_offset = zgap;
       Double_t absorber_half_length = (dZf[0]);
-      Double_t z_transition = zEndOfAbsorb + 2 * absorber_half_length + absorber_offset + 14 * cm + TCC8_trench_length;
+      Double_t Proximity_Shielding_length = 0*45.75*cm;
+      Double_t z_transition = zEndOfAbsorb + 2 * absorber_half_length + absorber_offset + 204 * cm + TCC8_trench_length + Proximity_Shielding_length;
       auto *rock = new TGeoBBox("rock", 20 * m, 20 * m, TCC8_length / 2. + ECN3_length / 2. + 5 * m);
       auto *muon_shield_cavern = new TGeoBBox("muon_shield_cavern", 4.995 * m, 3.75 * m, TCC8_length / 2.);
       auto *TCC8_shift = new TGeoTranslation("TCC8_shift", 1.435 * m, 2.05 * m, - TCC8_length / 2.);
@@ -530,6 +531,12 @@ void ShipMuonShield::ConstructGeometry()
       mag2->RegisterYourself();
       mag_trans.push_back(mag2);
 
+      // auto Proximity_Shielding = new TGeoBBox("Proximity_Shielding",  40*cm, 40 * cm, Proximity_Shielding_length/2);
+      // auto *Proximity_Shift = new TGeoTranslation("Proximity_Shift", 0 * m, 0 * m,0 * m );
+      // Proximity_Shift -> RegisterYourself();
+      // TGeoVolume *Proximity_Shielding_vol = new TGeoVolume("Proximity_Shielding_vol", Proximity_Shielding, iron);
+      // tShield->AddNode(Proximity_Shielding_vol, 1, new TGeoTranslation(0, 0,  zEndOfAbsorb + 0.0001));
+
       // Absorber
 
       auto abs = new TGeoBBox("absorber",  4.995 * m -0.002*m, 3.75 * m, absorber_half_length - 0.001);
@@ -552,7 +559,7 @@ void ShipMuonShield::ConstructGeometry()
 								// from absorber
       TGeoVolume *absorber = new TGeoVolume("AbsorberVol", absorberShape, iron);
       absorber->SetLineColor(42); // brown / light red
-      tShield->AddNode(absorber, 1, new TGeoTranslation(0, 0, zEndOfAbsorb + absorber_half_length + absorber_offset));
+      tShield->AddNode(absorber, 1, new TGeoTranslation(0, 0, zEndOfAbsorb + absorber_half_length + absorber_offset + Proximity_Shielding_length));
 
       auto *compRock = new TGeoCompositeShape("compRock",
                                               "rock - muon_shield_cavern:TCC8_shift"

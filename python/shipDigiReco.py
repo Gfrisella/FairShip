@@ -679,6 +679,18 @@ class ShipDigiReco:
 
 
  def digitizeMuon(self):
+   go_on = False
+   try:
+          self.sTree.muonPoint
+   except NameError:
+          print("digitize_SBT(): no vetoPoint found. Skip.")
+          return
+   except:
+          print("digitize_SBT(): no vetoPoint found. Skip!")
+          return
+   else:
+          go_on = True
+
    index = 0
    hitsPerDetId = {}
    for aMCPoint in self.sTree.muonPoint:
@@ -695,6 +707,19 @@ class ShipDigiReco:
      index+=1
 
  def digitizeSBT(self):
+     go_on = False
+     try:
+          self.sTree.vetoPoint
+     except NameError:
+          print("digitize_SBT(): no vetoPoint found. Skip.")
+          return
+     except:
+          print("digitize_SBT(): no vetoPoint found. Skip!")
+          return
+     else:
+          go_on = True
+
+     print("digitize_SBT(): vetoPoint found. Digitize.")
      ElossPerDetId    = {}
      tOfFlight        = {}
      listOfVetoPoints = {}

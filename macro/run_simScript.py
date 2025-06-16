@@ -111,7 +111,7 @@ parser.add_argument("-F",        dest="deepCopy",  help="default = False: copy o
 parser.add_argument("-t", "--test", dest="testFlag",  help="quick test", required=False,action="store_true")
 parser.add_argument("--dry-run", dest="dryrun",  help="stop after initialize", required=False,action="store_true")
 parser.add_argument("-D", "--display", dest="eventDisplay", help="store trajectories", required=False, action="store_true")
-parser.add_argument("--shieldName", help="The name of the SC shield in the database. SC default: sc_v6, Warm default: warm_opt", default="sc_v6", choices=["sc_v6", "warm_opt"])
+parser.add_argument("--shieldName", help="The name of the SC shield in the database. SC default: sc_v6, Warm default: warm_opt", default="sc_v6")
 parser.add_argument("--MesonMother",   dest="MM",  help="Choose DP production meson source: pi0, eta, omega, eta1, eta11", required=False,  default='pi0')
 parser.add_argument("--debug",  help="1: print weights and field 2: make overlap check", required=False, default=0, type=int, choices=range(0,3))
 parser.add_argument("--field_map", default=None, help="Specify spectrometer field map.")
@@ -610,8 +610,10 @@ if options.debug == 1:
  geomGeant4.printWeightsandFields(onlyWithField = True,\
              exclude=['DecayVolume','Tr1','Tr2','Tr3','Tr4','Veto','Ecal','Hcal','MuonDetector','SplitCal'])
 # Plot the field example
-fieldMaker.plotField(1, ROOT.TVector3(-9000.0, 6000.0, 50.0), ROOT.TVector3(-300.0, 300.0, 6.0), 'Bzx.png')
-fieldMaker.plotField(2, ROOT.TVector3(-9000.0, 6000.0, 50.0), ROOT.TVector3(-400.0, 400.0, 6.0), 'Bzy.png')
+fieldMaker.plotField(1, ROOT.TVector3(-200, 3100, 10.0), ROOT.TVector3(-300.0, 300.0, 6.0), 'Bzx.png')
+fieldMaker.plotField(2, ROOT.TVector3(-200, 3100, 10.0), ROOT.TVector3(-400.0, 400.0, 6.0), 'Bzy.png')
+fieldMaker.plotField(1, ROOT.TVector3(0, 10000, 50.0), ROOT.TVector3(-300.0, 300.0, 20.0), 'Bzx_all.png')
+fieldMaker.plotField(2, ROOT.TVector3(0, 10000, 50.0), ROOT.TVector3(-400.0, 400.0, 20.0), 'Bzy_all.png')
 
 # -----Start run----------------------------------------------------
 run.Run(options.nEvents)

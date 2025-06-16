@@ -454,8 +454,8 @@ def configure(run, ship_geo):
         print("From shipDet_conf.py, configure(): add a few scoring planes for muon shield performance study")
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
-        ScoPlane_zpos  = [ship_geo.hadronAbsorber.z - 2500, ship_geo.hadronAbsorber.z + 8210, ship_geo.hadronAbsorber.z + 3010] #cm  # 2587., -2623 ] # cm
-        ScoPlane_Add   = [1, 1, 1] # Add this Scoring Plane (1 or 0)
+        ScoPlane_zpos  = [- 40 * u.m, 84.2 * u.m , 32.7 * u.m]
+        ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
         ScoPlane_HalfX = [50., 225., 400] # cm
         ScoPlane_HalfY = [50., 325., 300] # cm
         ScoPlane_len = [0.1, 0.1, 0.1]
@@ -488,12 +488,12 @@ def configure(run, ship_geo):
         baloon_thickness = 0.13  # cm
         ScoPlane_xpos  = [ 0.]*7 # cm
         ScoPlane_ypos  = [ 0.]*7 # cm
-        ScoPlane_zpos  = [-2530, +2530] + [0]* 5 # cm
+        ScoPlane_zpos  = [32.7 * u.m , 83 * u.m] + [57.85 * u.m]* 5 
         ScoPlane_Add   = [1]*7 # Add this Scoring Plane (1 or 0)
         ScoPlane_HalfX = [50., 200.] + [0]* 5 # cm
         ScoPlane_HalfY = [135., 300.] + [0]* 5  # cm
         ScoPlane_arb8_dz = [0] * 2 + [2530] * 4 + [2530 - baloon_thickness]
-        ScoPlane_len = [0.1]* 2 + [0]* 5
+        ScoPlane_len = [0.1]* 2 + [5030/2 - 0.2]* 5
         ScoPlane_medium = ["vacuums"] * 2 + ["PVC"] * 4 + ["helium"]
         ScoPlane_shape = ["Box"] * 2 + ["Arb8"] * 5
 
@@ -582,26 +582,26 @@ def configure(run, ship_geo):
         dZ = [None] * 7
         Z = [None] * 7
         zgap = 10.
-        dZ[0] = ship_geo.muShield.dZ1 - zgap / 2;
-        Z[0] = zEndOfAbsorb + dZ[0] + zgap;
+        dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
+        Z[0] = zEndOfAbsorb + dZ[0] + zgap
 
-        dZ[1] = ship_geo.muShield.dZ2 - zgap / 2;
-        Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap;
+        dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
+        Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap
 
-        dZ[2] = ship_geo.muShield.dZ3 - zgap / 2;
-        Z[2] = Z[1] + dZ[1] + dZ[2] + zgap;
+        dZ[2] = ship_geo.muShield.dZ3 - zgap / 2
+        Z[2] = Z[1] + dZ[1] + dZ[2] + zgap
 
-        dZ[3] = ship_geo.muShield.dZ4 - zgap / 2;
-        Z[3] = Z[2] + dZ[2] + dZ[3] + zgap;
+        dZ[3] = ship_geo.muShield.dZ4 - zgap / 2
+        Z[3] = Z[2] + dZ[2] + dZ[3] + zgap
 
-        dZ[4] = ship_geo.muShield.dZ5 - zgap / 2;
-        Z[4] = Z[3] + dZ[3] + dZ[4] + zgap;
+        dZ[4] = ship_geo.muShield.dZ5 - zgap / 2
+        Z[4] = Z[3] + dZ[3] + dZ[4] + zgap
 
-        dZ[5] = ship_geo.muShield.dZ6 - zgap / 2;
-        Z[5] = Z[4] + dZ[4] + dZ[5] + zgap;
+        dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
+        Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
 
-        dZ[6] = ship_geo.muShield.dZ7 - zgap / 2;
-        Z[6] = Z[5] + dZ[5] + dZ[6] + zgap;
+        dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
+        Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
         for i in range(4, len(Z)):
                 zParts = int(np.ceil(2.0 * dZ[i] / 50))
                 zetino = list(np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], zParts + 1))  # ✅ fix

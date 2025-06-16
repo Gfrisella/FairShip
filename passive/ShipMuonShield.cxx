@@ -287,24 +287,6 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
         dX2 + middleGap2 + coil_gap2,
         dY2
       };
-      std::array<Double_t, 16> cornersTL = {
-        middleGap + dX,dY,
-        middleGap,
-        dY + dY_yoke_1,
-        dX + ratio_yoke_1*dX + middleGap + coil_gap,
-        dY + dY_yoke_1,
-        dX + middleGap + coil_gap,
-        dY,
-        middleGap2 + dX2,
-        dY2,
-        middleGap2,
-        dY2 + dY_yoke_2,
-        dX2 + ratio_yoke_2*dX2 + middleGap2 + coil_gap2,
-        dY2 + dY_yoke_2,
-        dX2 + middleGap2 + coil_gap2,
-        dY2
-      };
-
       std::array<Double_t, 16> cornersMainSideL = {
         dX + middleGap + gap,
         -(dY), 

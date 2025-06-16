@@ -160,10 +160,6 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
          fieldMaker.defineFieldMap('NuMap','files/nuTauDetField.root', ROOT.TVector3(0.0,0.0,shipGeo.EmuMagnet.zC))
          fieldsList.append('NuMap')
 
-      if not shipGeo.hadronAbsorber.WithConstField:
-       fieldMaker.defineFieldMap('HadronAbsorberMap','files/FieldHadronStopper_raised_20190411.root', ROOT.TVector3(0.0,0.0,shipGeo.hadronAbsorber.z))
-       fieldsList.append('HadronAbsorberMap')
-
       if not shipGeo.muShield.WithConstField:
        offset, _ , _= ShieldUtils.find_offset(shipGeo) 
        quadSymm = True
@@ -192,6 +188,9 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
                                  ROOT.TVector3(0.0, 0.0, offset), ROOT.TVector3(0.0, 0.0, 0.0), quadSymm)
        fieldsList.append('muonShieldField')
        print(f"               from {file_name} using offset z = {str(offset)} cm")
+      elif not shipGeo.hadronAbsorber.WithConstField:
+       fieldMaker.defineFieldMap('HadronAbsorberMap','files/FieldHadronStopper_raised_20190411.root', ROOT.TVector3(0.0,0.0,shipGeo.hadronAbsorber.z))
+       fieldsList.append('HadronAbsorberMap')
     # Combine the fields to obtain the global field
       if len(fieldsList) > 1:
        fieldMaker.defineComposite('TotalField', *fieldsList)  #fieldsList MUST have length <=4

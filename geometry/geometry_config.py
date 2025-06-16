@@ -278,7 +278,6 @@ with ConfigRegistry.register_config("basic") as c:
     magnetIncrease    = 100.*u.cm
     c.muShield = AttrDict()
     c.muShield.Field = 1.7 # in units of Tesla expected by ShipMuonShield
-    c.muShield.LE = 7 * u.m     # - 0.5 m air - Goliath: 4.5 m - 0.5 m air - nu-tau mu-det: 3 m - 0.5 m air. finally 10m asked by Giovanni
     c.muShield.dZ0 = 1 * u.m
 
 
@@ -303,7 +302,7 @@ with ConfigRegistry.register_config("basic") as c:
             c.muShield.dZ3 + c.muShield.dZ4 +
             c.muShield.dZ5 + c.muShield.dZ6 +
             c.muShield.dZ7
-    ) + c.muShield.LE
+    )
 
     c.hadronAbsorber = AttrDict()
     

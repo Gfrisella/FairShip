@@ -454,7 +454,7 @@ def configure(run, ship_geo):
         print("From shipDet_conf.py, configure(): add a few scoring planes for muon shield performance study")
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
-        ScoPlane_zpos  = [- 40 * u.m, 84.2 * u.m , 32.7 * u.m]
+        ScoPlane_zpos  = [- 40 * u.m, 83.95 * u.m , 32.7 * u.m]
         ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
         ScoPlane_HalfX = [50., 225., 400] # cm
         ScoPlane_HalfY = [50., 325., 300] # cm
@@ -492,7 +492,7 @@ def configure(run, ship_geo):
         ScoPlane_Add   = [1]*7 # Add this Scoring Plane (1 or 0)
         ScoPlane_HalfX = [50., 200.] + [0]* 5 # cm
         ScoPlane_HalfY = [135., 300.] + [0]* 5  # cm
-        ScoPlane_arb8_dz = [0] * 2 + [2530] * 4 + [2530 - baloon_thickness]
+        ScoPlane_arb8_dz = [0] * 2 + [5030/2 - 0.02] * 4 + [5030/2 - baloon_thickness]
         ScoPlane_len = [0.1]* 2 + [5030/2 - 0.2]* 5
         ScoPlane_medium = ["vacuums"] * 2 + ["PVC"] * 4 + ["helium"]
         ScoPlane_shape = ["Box"] * 2 + ["Arb8"] * 5

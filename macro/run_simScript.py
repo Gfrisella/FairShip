@@ -610,8 +610,8 @@ if options.debug == 1:
  geomGeant4.printWeightsandFields(onlyWithField = True,\
              exclude=['DecayVolume','Tr1','Tr2','Tr3','Tr4','Veto','Ecal','Hcal','MuonDetector','SplitCal'])
 # Plot the field example
-fieldMaker.plotField(1, ROOT.TVector3(-200, 3100, 10.0), ROOT.TVector3(-300.0, 300.0, 6.0), 'Bzx.png')
-fieldMaker.plotField(2, ROOT.TVector3(-200, 3100, 10.0), ROOT.TVector3(-400.0, 400.0, 6.0), 'Bzy.png')
+fieldMaker.plotField(1, ROOT.TVector3(0, 3250, 10.0), ROOT.TVector3(-300.0, 300.0, 6.0), 'Bzx.png')
+fieldMaker.plotField(2, ROOT.TVector3(0, 3250, 10.0), ROOT.TVector3(-400.0, 400.0, 6.0), 'Bzy.png')
 fieldMaker.plotField(1, ROOT.TVector3(0, 10000, 50.0), ROOT.TVector3(-300.0, 300.0, 20.0), 'Bzx_all.png')
 fieldMaker.plotField(2, ROOT.TVector3(0, 10000, 50.0), ROOT.TVector3(-400.0, 400.0, 20.0), 'Bzy_all.png')
 

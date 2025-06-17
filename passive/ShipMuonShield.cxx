@@ -423,7 +423,7 @@ FieldDirection::down };
   }
 
   dZ[0] = dZ1 - zgap / 2;
-  Z[0] = zEndOfProxShield + dZ[0] + zgap;
+  Z[0] = zEndOfProxShield + dZ[0] + 0.2;
   dZ[1] = dZ2 - zgap / 2;
   Z[1] = Z[0] + dZ[0] + dZ[1] + zgap;
   dZ[2] = dZ3 - zgap / 2;
@@ -465,7 +465,7 @@ void ShipMuonShield::ConstructGeometry()
       Double_t ECN3_length =  100 * m;
       Double_t TCC8_trench_length = 12 * m;
       Double_t zgap = 10 * cm;
-      Double_t absorber_offset = zgap;
+      Double_t absorber_offset = zgap * 0 + 0.2;
       Double_t Proximity_shield_half_length = 55.36/2 * cm;
       Double_t zEndOfTarget = zEndOfProxShield - 2*Proximity_shield_half_length;
       Double_t absorber_half_length = (dZf[0]);
@@ -522,11 +522,11 @@ void ShipMuonShield::ConstructGeometry()
       mag_trans.push_back(mag2);
 
       // Proximity Shielding
-      auto Proximity_Shielding = new TGeoBBox("Proximity_Shielding",  40*cm, 40 * cm, Proximity_shield_half_length);
+      auto Proximity_Shielding = new TGeoBBox("Proximity_Shielding",  50*cm, 50 * cm, Proximity_shield_half_length);
       auto *Proximity_Shift = new TGeoTranslation("Proximity_Shift", 0 * m, 0 * m,0 * m );
       Proximity_Shift -> RegisterYourself();
       TGeoVolume *Proximity_Shielding_vol = new TGeoVolume("Proximity_Shielding_vol", Proximity_Shielding, copper);
-      tShield->AddNode(Proximity_Shielding_vol, 1, new TGeoTranslation(0, 0,  zEndOfTarget +  Proximity_shield_half_length + 0.01*m));
+      tShield->AddNode(Proximity_Shielding_vol, 1, new TGeoTranslation(0, 0,  zEndOfTarget +  Proximity_shield_half_length + 0.001*m));
 
       // Absorber
 

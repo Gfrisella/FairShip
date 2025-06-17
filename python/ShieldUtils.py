@@ -4,7 +4,7 @@ def find_offset(ship_geo):
     Z = [None] * 7
     zgap = 10.
     dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
-    Z[0] = zEndOfProxShield + dZ[0] + zgap
+    Z[0] = zEndOfProxShield + dZ[0] + 0.2
 
     dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
     Z[1] = Z[0] + dZ[0] + dZ[1] + zgap
@@ -27,8 +27,7 @@ def find_offset(ship_geo):
     
     shield_center = (Z[0] + Z[6] + dZ[6] - dZ[0]) / 2
     shield_half_lenth = abs((Z[0] - dZ[0]) - (Z[6] + dZ[6])) / 2
-    offset = zEndOfProxShield + zgap
-    print('FOR GUGLIELMO: offset = ', offset, ' shield_center = ', shield_center, ' shield_half_lenth = ', shield_half_lenth)
+    offset = Z[0] - dZ[0]
     return offset, shield_center, shield_half_lenth
 
 def find_shield_center(ship_geo):
@@ -37,7 +36,7 @@ def find_shield_center(ship_geo):
     Z = [None] * 7
     zgap = 10.
     dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
-    Z[0] = zEndOfProxShield + dZ[0] + zgap
+    Z[0] = zEndOfProxShield + dZ[0] + 0.2
 
     dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
     Z[1] = Z[0] + dZ[0] + dZ[1] + zgap
@@ -54,8 +53,8 @@ def find_shield_center(ship_geo):
     dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
     Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
 
-    dZ[6] = ship_geo.muShield.dZ7 - zgap / 2;
-    Z[6] = Z[5] + dZ[5] + dZ[6] + zgap;
+    dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
+    Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
 
 
     shield_center = (Z[1] + Z[6] + dZ[6] - dZ[1]) / 2

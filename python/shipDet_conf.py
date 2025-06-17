@@ -455,7 +455,7 @@ def configure(run, ship_geo):
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
         ScoPlane_zpos  = [- 40 * u.m, 83.95 * u.m , 32.7 * u.m]
-        ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
+        ScoPlane_Add   = [1, 0, 0] # Add this Scoring Plane (1 or 0)
         ScoPlane_HalfX = [50., 225., 400] # cm
         ScoPlane_HalfY = [50., 325., 300] # cm
         ScoPlane_len = [0.1, 0.1, 0.1]
@@ -485,41 +485,41 @@ def configure(run, ship_geo):
     ## DECAY VESSEL
 
     if DECAY_VESSEl:
-        baloon_thickness = 0.13  # cm
+        balloon_thickness = 0.13  # cm
         ScoPlane_xpos  = [ 0.]*7 # cm
         ScoPlane_ypos  = [ 0.]*7 # cm
         ScoPlane_zpos  = [32.7 * u.m , 83 * u.m] + [57.85 * u.m]* 5 
         ScoPlane_Add   = [1]*7 # Add this Scoring Plane (1 or 0)
-        ScoPlane_HalfX = [50., 200.] + [0]* 5 # cm
-        ScoPlane_HalfY = [135., 300.] + [0]* 5  # cm
-        ScoPlane_arb8_dz = [0] * 2 + [5030/2 - 0.02] * 4 + [5030/2 - baloon_thickness]
+        ScoPlane_HalfX = [455.9, 455.9] + [0]* 5 # cm
+        ScoPlane_HalfY = [336., 336.] + [0]* 5  # cm
+        ScoPlane_arb8_dz = [0] * 2 + [5030/2 - 0.02] * 4 + [5030/2 - balloon_thickness]
         ScoPlane_len = [0.1]* 2 + [5030/2 - 0.2]* 5
-        ScoPlane_medium = ["vacuums"] * 2 + ["PVC"] * 4 + ["helium"]
+        ScoPlane_medium =  ["PVC"] * 6 + ["helium"]
         ScoPlane_shape = ["Box"] * 2 + ["Arb8"] * 5
 
         
-        Helium_baloon = [
-            -0.5*1e2 + baloon_thickness, -1.35*1e2 + baloon_thickness,   # corner 1
-            -0.5*1e2 + baloon_thickness,  1.35*1e2 - baloon_thickness,   # corner 4
-            0.5*1e2 - baloon_thickness,  1.35*1e2 - baloon_thickness,   # corner 3
-            0.5*1e2 - baloon_thickness, -1.35*1e2 + baloon_thickness,   # corner 2
-            -2*1e2 + baloon_thickness,  -3*1e2 + baloon_thickness,       # corner 1
-            -2*1e2 + baloon_thickness,   3*1e2 - baloon_thickness,       # corner 4
-            2*1e2 - baloon_thickness,   3*1e2 - baloon_thickness,       # corner 3
-            2*1e2 - baloon_thickness,  -3*1e2 + baloon_thickness        # corner 2
+        Helium_balloon = [
+            -0.5*1e2 + balloon_thickness, -1.35*1e2 + balloon_thickness,   # corner 1
+            -0.5*1e2 + balloon_thickness,  1.35*1e2 - balloon_thickness,   # corner 4
+            0.5*1e2 - balloon_thickness,  1.35*1e2 - balloon_thickness,   # corner 3
+            0.5*1e2 - balloon_thickness, -1.35*1e2 + balloon_thickness,   # corner 2
+            -2*1e2 + balloon_thickness,  -3*1e2 + balloon_thickness,       # corner 1
+            -2*1e2 + balloon_thickness,   3*1e2 - balloon_thickness,       # corner 4
+            2*1e2 - balloon_thickness,   3*1e2 - balloon_thickness,       # corner 3
+            2*1e2 - balloon_thickness,  -3*1e2 + balloon_thickness        # corner 2
         ]
 
-        baloon_thickness = 0.12  # cm
+        balloon_thickness = 0.12  # cm
 
         faces = faces = [
             # 3. Right face
             [
-                0.5*1e2 - baloon_thickness, -1.35*1e2,
-                0.5*1e2 - baloon_thickness, 1.35*1e2,
+                0.5*1e2 - balloon_thickness, -1.35*1e2,
+                0.5*1e2 - balloon_thickness, 1.35*1e2,
                 0.5*1e2,  1.35*1e2,
                 0.5*1e2, -1.35*1e2,
-                2*1e2 - baloon_thickness, -3*1e2,
-                2*1e2 - baloon_thickness, 3*1e2,
+                2*1e2 - balloon_thickness, -3*1e2,
+                2*1e2 - balloon_thickness, 3*1e2,
                 2*1e2,  3*1e2,
                 2*1e2, -3*1e2
             ],
@@ -528,40 +528,40 @@ def configure(run, ship_geo):
             [
                 -0.5*1e2, -1.35*1e2,
                 -0.5*1e2,  1.35*1e2,
-                -0.5*1e2 + baloon_thickness,  1.35*1e2,
-                -0.5*1e2 + baloon_thickness, -1.35*1e2,
+                -0.5*1e2 + balloon_thickness,  1.35*1e2,
+                -0.5*1e2 + balloon_thickness, -1.35*1e2,
                 -2*1e2, -3*1e2,
                 -2*1e2,  3*1e2,
-                -2*1e2 + baloon_thickness,  3*1e2,
-                -2*1e2 + baloon_thickness, -3*1e2
+                -2*1e2 + balloon_thickness,  3*1e2,
+                -2*1e2 + balloon_thickness, -3*1e2
             ],
 
             # 5. Top face
             [
-                -0.5*1e2,  1.35*1e2 - baloon_thickness,
+                -0.5*1e2,  1.35*1e2 - balloon_thickness,
                 -0.5*1e2,  1.35*1e2,
                 0.5*1e2,  1.35*1e2,
-                0.5*1e2,  1.35*1e2 - baloon_thickness,
-                -2*1e2,  3*1e2 - baloon_thickness,
+                0.5*1e2,  1.35*1e2 - balloon_thickness,
+                -2*1e2,  3*1e2 - balloon_thickness,
                 -2*1e2,  3*1e2,
                 2*1e2,  3*1e2,
-                2*1e2,  3*1e2 - baloon_thickness
+                2*1e2,  3*1e2 - balloon_thickness
             ],
 
             # 6. Bottom face
             [
                 -0.5*1e2, -1.35*1e2,
-                -0.5*1e2, -1.35*1e2 + baloon_thickness,
-                0.5*1e2, -1.35*1e2 + baloon_thickness,
+                -0.5*1e2, -1.35*1e2 + balloon_thickness,
+                0.5*1e2, -1.35*1e2 + balloon_thickness,
                 0.5*1e2, -1.35*1e2,
                 -2*1e2, -3*1e2,
-                -2*1e2, -3*1e2 + baloon_thickness,
-                2*1e2, -3*1e2 + baloon_thickness,
+                -2*1e2, -3*1e2 + balloon_thickness,
+                2*1e2, -3*1e2 + balloon_thickness,
                 2*1e2, -3*1e2
             ]
         ]
 
-        faces.append(Helium_baloon)
+        faces.append(Helium_balloon)
 
         for iz in range(0,len(ScoPlane_zpos)):
             if ScoPlane_Add[iz]:
@@ -578,12 +578,12 @@ def configure(run, ship_geo):
             else:
                 print("... ScoringPlane"+str(iz)+" is not to be defined")
     elif SND_ver:
-        zEndOfAbsorb = ship_geo.muShield.z - ship_geo.muShield.length / 2;
+        zEndOfPassiveShield = ship_geo.muShield.z 
         dZ = [None] * 7
         Z = [None] * 7
         zgap = 10.
         dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
-        Z[0] = zEndOfAbsorb + dZ[0] + zgap
+        Z[0] = zEndOfPassiveShield + dZ[0] + 0.2
 
         dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
         Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap

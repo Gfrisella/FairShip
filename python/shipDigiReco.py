@@ -4,11 +4,18 @@ import shipPatRec
 import shipunit as u
 import rootUtils as ut
 from array import array
+import matplotlib.pyplot as plt
 import sys
 from math import fabs
 stop  = ROOT.TVector3()
 start = ROOT.TVector3()
-
+if global_variables.debug:
+  f = open("/afs/cern.ch/user/g/gfrisell/link_afs/temp/real_hits.txt", "w")
+  f.close()
+  f = open("/afs/cern.ch/user/g/gfrisell/link_afs/temp/geant_hits.txt", "w")
+  f.close()
+  f = open("/afs/cern.ch/user/g/gfrisell/link_afs/temp/smeared_hits.txt", "w")
+  f.close()
 class ShipDigiReco:
  " convert FairSHiP MC hits / digitized hits to measurements"
  def __init__(self,fout,fgeo):
@@ -49,7 +56,7 @@ class ShipDigiReco:
     self.fn = ROOT.TFile(fout,'update')
     self.sTree = self.fn.Get("cbmsim")
 #
-  if self.sTree.GetBranch("GeoTracks"): self.sTree.SetBranchStatus("GeoTracks",0)
+  #if self.sTree.GetBranch("GeoTracks"): self.sTree.SetBranchStatus("GeoTracks",0)
 # prepare for output
 # event header
   self.header  = ROOT.FairEventHeader()
@@ -195,7 +202,9 @@ class ShipDigiReco:
 
  def reconstruct(self):
    ntracks = self.findTracks()
+   global_variables.h['ntracks'].Fill(ntracks)
    nGoodTracks = self.findGoodTracks()
+   global_variables.h['nGoodTracks'].Fill(nGoodTracks)
    self.linkVetoOnTracks()
    for x in self.caloTasks:
     if hasattr(x,'execute'): x.execute()
@@ -217,7 +226,7 @@ class ShipDigiReco:
    self.eventHeader.Fill()
    self.digiSBT.clear()
    self.digiSBT2MC.clear()
-   self.digitize_SBT()
+  #  self.digitize_SBT()
    self.digiSBTBranch.Fill()
    self.mcLinkSBT.Fill()
    self.digiStraw.clear()
@@ -683,10 +692,10 @@ class ShipDigiReco:
    try:
           self.sTree.muonPoint
    except NameError:
-          print("digitize_SBT(): no vetoPoint found. Skip.")
+          #print("digitize_SBT(): no vetoPoint found. Skip.")
           return
    except:
-          print("digitize_SBT(): no vetoPoint found. Skip!")
+          #print("digitize_SBT(): no vetoPoint found. Skip!")
           return
    else:
           go_on = True
@@ -711,10 +720,10 @@ class ShipDigiReco:
      try:
           self.sTree.vetoPoint
      except NameError:
-          print("digitize_SBT(): no vetoPoint found. Skip.")
+          #print("digitize_SBT(): no vetoPoint found. Skip.")
           return
      except:
-          print("digitize_SBT(): no vetoPoint found. Skip!")
+          #print("digitize_SBT(): no vetoPoint found. Skip!")
           return
      else:
           go_on = True
@@ -792,6 +801,7 @@ class ShipDigiReco:
   return SmearedHits
 
  def smearHits(self,no_amb=None):
+
  # smear strawtube points
   SmearedHits = []
   key = -1
@@ -806,10 +816,17 @@ class ShipDigiReco:
    #distance to wire
      delt1 = (start[2]-z1)/u.speedOfLight
      p=self.sTree.strawtubesPoint[key]
+     if global_variables.debug:
+          with open("/afs/cern.ch/user/g/gfrisell/link_afs/temp/real_hits.txt", "a") as f:
+            f.write(f" {global_variables.iEvent} {p.GetTrackID()} {p.GetX()} {p.GetY()} {p.GetZ()} {p.GetPx()} {p.GetPy()} {p.GetPz()} {p.GetTime()} \n") 
      # use true t0  construction:
      #     fdigi = t0 + p->GetTime() + t_drift + ( stop[0]-p->GetX() )/ speedOfLight;
      smear = (aDigi.GetDigi() - self.sTree.t0  - p.GetTime() - ( stop[0]-p.GetX() )/ u.speedOfLight) * v_drift
      if no_amb: smear = p.dist2Wire()
+    #  if global_variables.debug:
+    #   print(f"[smearHits] Hit #{key}: detID={detID}, smear={smear:.2f}, dist2Wire={p.dist2Wire():.2f}, xtop={stop.x():.2f}, ytop={stop.y():.2f}, xbot={start.x():.2f}, ybot={start.y():.2f}")
+    #   print(f"[smearHits] Digi={aDigi.GetDigi():.2f}, t0={self.sTree.t0:.2f}, p.GetTime()={p.GetTime():.2f}, correction={(stop[0]-p.GetX())/u.speedOfLight:.2f}")
+
      SmearedHits.append( {'digiHit':key,'xtop':stop.x(),'ytop':stop.y(),'z':stop.z(),'xbot':start.x(),'ybot':start.y(),'dist':smear, 'detID':detID} )
      # Note: top.z()==bot.z() unless misaligned, so only add key 'z' to smearedHit
      if abs(stop.y()) == abs(start.y()):
@@ -822,6 +839,7 @@ class ShipDigiReco:
   return SmearedHits
 
  def findTracks(self):
+  global_variables.h['disty'].Reset()
   hitPosLists    = {}
   hit_detector_ids = {}
   stationCrossed = {}
@@ -833,17 +851,16 @@ class ShipDigiReco:
 
 #
   if global_variables.withT0:
-    self.SmearedHits = self.withT0Estimate()
+    SmearedHits = self.withT0Estimate()
   # old procedure, not including estimation of t0
   else:
-    self.SmearedHits = self.smearHits(global_variables.withNoStrawSmearing)
-
+    SmearedHits = self.smearHits(global_variables.withNoStrawSmearing)
   nTrack = -1
   trackCandidates = []
 
   if global_variables.realPR:
     # Do real PatRec
-    track_hits = shipPatRec.execute(self.SmearedHits, global_variables.ShipGeo, global_variables.realPR)
+    track_hits = shipPatRec.execute(SmearedHits, global_variables.ShipGeo, global_variables.realPR)
     # Create hitPosLists for track fit
     for i_track in track_hits.keys():
       atrack = track_hits[i_track]
@@ -869,8 +886,14 @@ class ShipDigiReco:
         if station not in stationCrossed[trID]:
           stationCrossed[trID][station] = 0
         stationCrossed[trID][station] += 1
+        if global_variables.debug:
+          print(f"[findTracks-RealPR] trID={trID}, detID={detID}, station={station}, xtop={sm['xtop']:.2f}, ytop={sm['ytop']:.2f}, dist={sm['dist']:.2f}")
   else: # do fake pattern recognition
-   for sm in self.SmearedHits:
+   for sm in SmearedHits:
+    if len(SmearedHits) < 25: continue  # not enough hits to make a good trackfit``
+    if global_variables.debug:
+      print(len(SmearedHits), "hits before pattern recognition")
+      print(self.sTree.strawtubesPoint[sm['digiHit']].GetTrackID(), "trid before pattern recognition")
     detID = self.digiStraw[sm['digiHit']].GetDetectorID()
     station = self.digiStraw[sm['digiHit']].GetStationNumber()
     trID = self.sTree.strawtubesPoint[sm['digiHit']].GetTrackID()
@@ -885,6 +908,17 @@ class ShipDigiReco:
     listOfIndices[trID].append(sm['digiHit'])
     if station not in stationCrossed[trID]: stationCrossed[trID][station]=0
     stationCrossed[trID][station]+=1
+    if global_variables.debug:
+        print(f"[findTracks-FakePR] trID={trID}, detID={detID}, station={station}, xtop={sm['xtop']:.2f}, ytop={sm['ytop']:.2f}, dist={sm['dist']:.2f}")
+        with open("/afs/cern.ch/user/g/gfrisell/link_afs/temp/smeared_hits.txt", "a") as f:
+          for trID in hitPosLists:
+            for i in range(hitPosLists[trID].size()):
+                vec = hitPosLists[trID][i]
+                vec_list = [vec[j] for j in range(7)]
+                line = f" {global_variables.iEvent} {trID} " +   " ".join(f"{v:.6f}" for v in vec_list) + "\n"
+                f.write(line)
+
+
 #
    # for atrack in listOfIndices:
    #   # make tracklets out of trackCandidates, just for testing, should be output of proper pattern recognition
@@ -897,19 +931,28 @@ class ShipDigiReco:
 #
   for atrack in hitPosLists:
     if atrack < 0: continue # these are hits not assigned to MC track because low E cut
-    # pdg    = self.sTree.MCTrack[atrack].GetPdgCode()
+    pdg    = self.sTree.MCTrack[atrack].GetPdgCode()
     # if not self.PDG.GetParticle(pdg): continue # unknown particle
-    pdg = 13 # assume all tracks are muons
+    #pdg = 13 # assume all tracks are muons
     meas = hitPosLists[atrack]
     detIDs = hit_detector_ids[atrack]
     nM = meas.size()
     if nM < 25 : continue                          # not enough hits to make a good trackfit
     if len(stationCrossed[atrack]) < 3 : continue  # not enough stations crossed to make a good trackfit
     if global_variables.debug:
-       mctrack = self.sTree.MCTrack[atrack]
+      mctrack = self.sTree.MCTrack[atrack]
+      print(atrack, "track ID")
+      tr = self.sTree.GeoTracks[0]
+      print(f"Track {0}: {tr.GetNpoints()} points")
+      for m in range(0,tr.GetNpoints()): # loop over points
+          point = tr.GetPoint(m)
+          if point[2] < 8000 or point[2] > 10000: continue
+          with open("/afs/cern.ch/user/g/gfrisell/link_afs/temp/geant_hits.txt", "a") as f:
+            f.write(f"{global_variables.iEvent} {atrack} {point[0]} {point[1]} {point[2]} {point[3]}\n")
+  # to be checked
     # charge = self.PDG.GetParticle(pdg).Charge()/(3.)
-    posM = ROOT.TVector3(0, 0, 0)
-    momM = ROOT.TVector3(0,0,3.*u.GeV)
+    posM = ROOT.TVector3(0, 0, 50. *u.m)
+    momM = ROOT.TVector3(0,0,3*u.GeV)
 # approximate covariance
     covM = ROOT.TMatrixDSym(6)
     resolution = self.sigma_spatial
@@ -931,8 +974,24 @@ class ShipDigiReco:
     hitCov = ROOT.TMatrixDSym(7)
     hitCov[6][6] = resolution*resolution
     hitID = 0
+    if global_variables.debug:
+      print(f"[TrackCandidate] trID={atrack}, nMeas={nM}, nStations={len(stationCrossed[atrack])}")
     for m, detID in zip(meas, detIDs):
       tp = ROOT.genfit.TrackPoint(theTrack) # note how the point is told which track it belongs to
+      # print("m size:", len(m))
+      # for i in range(len(m)):
+      #     print(f"m[{i}] = {m[i]}")
+
+
+      # print("detID: ", detID)
+      # print("hitID: ", hitID)
+      # n = hitCov.GetNrows()  # assuming square matrix
+      # print("hitCov matrix:")
+      # for i in range(n):
+      #     row = []
+      #     for j in range(n):
+      #         row.append(hitCov(i, j))
+      #     print(row)
       measurement = ROOT.genfit.WireMeasurement(
         m,
         hitCov,
@@ -940,7 +999,6 @@ class ShipDigiReco:
         hitID,
         tp
       ) # the measurement is told which trackpoint it belongs to
-      # print measurement.getMaxDistance()
       measurement.setMaxDistance(global_variables.ShipGeo.strawtubes.InnerStrawDiameter / 2.)
       # measurement.setLeftRightResolution(-1)
       tp.addRawMeasurement(measurement) # package measurement in the TrackPoint
@@ -953,6 +1011,8 @@ class ShipDigiReco:
 #check
     atrack = entry[1]
     theTrack = entry[0]
+    if global_variables.debug:
+      print(f"[TrackFit] Trying fit: trID={atrack}, nPoints={theTrack.getNumPointsWithMeasurement()}")
     try:
       theTrack.checkConsistency()
     except ROOT.genfit.Exception as e:
@@ -960,9 +1020,12 @@ class ShipDigiReco:
       print(e.what())
       ut.reportError(e)
 # do the fit
+    self.fitter.processTrack(theTrack)
     try:
       self.fitter.processTrack(theTrack) # processTrackWithRep(theTrack,rep,True)
     except:
+      if global_variables.debug:
+        print(f"[TrackFit] FAILED for trID={atrack}")
       if global_variables.debug:
         print("genfit failed to fit track")
       error = "genfit failed to fit track"
@@ -995,6 +1058,10 @@ class ShipDigiReco:
     if nmeas > 0:
       chi2 = fitStatus.getChi2() / nmeas
       global_variables.h['chi2'].Fill(chi2)
+      if global_variables.debug:
+        print(f"[TrackFit] Fit OK: chi2/ndf={chi2:.2f}, converged={fitStatus.isFitConverged()}")
+
+
 # make track persistent
     nTrack   = self.fGenFitArray.GetEntries()
     self.fGenFitArray[nTrack] = theTrack
@@ -1020,7 +1087,7 @@ class ShipDigiReco:
   self.mcLink.Fill()
 # debug
   if global_variables.debug:
-   print('save tracklets:')
+   #print('save tracklets:')
    for x in self.sTree.Tracklets:
     print(x.getType(),x.getList().size())
   return nTrack+1

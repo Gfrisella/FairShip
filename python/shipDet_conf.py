@@ -455,7 +455,7 @@ def configure(run, ship_geo):
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
         ScoPlane_zpos  = [- 40 * u.m, 83.95 * u.m , 32.7 * u.m]
-        ScoPlane_Add   = [1, 0, 0] # Add this Scoring Plane (1 or 0)
+        ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
         ScoPlane_HalfX = [50., 225., 400] # cm
         ScoPlane_HalfY = [50., 325., 300] # cm
         ScoPlane_len = [0.1, 0.1, 0.1]

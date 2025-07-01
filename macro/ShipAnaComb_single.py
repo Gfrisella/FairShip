@@ -3,7 +3,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
 import sys
-import pickle
 import ROOT
 import ctypes
 import rootUtils as ut
@@ -17,9 +16,7 @@ import geomGeant4
 import shipDet_conf
 import TrackExtrapolateTool
 from array import array
-from time import time
 
-t0 = time()
 shipRoot_conf.configure()
 PDG = ROOT.TDatabasePDG.Instance()
 
@@ -60,46 +57,17 @@ print("#### WEIGHTS ARE NOT USED IN THIS EXAMPLE      ######################")
 print("####    MUST BE ADDED !!                       ######################")
 print("#####################################################################")
 
-def chainTheFiles(maindir, filenames, treename='cbmsim'):
-    t = ROOT.TChain(treename)
-    for fn in filenames:
-        full_path = os.path.join(maindir, fn)
-        t.AddFile(full_path)
-        print(f'Added file {full_path} to chain. Now total entries: {t.GetEntries()}')
-    return t
 
-# Base directory where the subdirs live
-maindir = "/afs/cern.ch/user/g/gfrisell/cernbox/MS/LFP_5_BKG"  # <- change this to the actual path
-
-# File to look for
-target_filename = "ship.conical.MuonBack-TGeant4_D_SaveCrit_rec.root"
-
-# Walk through maindir and collect relative paths to the target file
-filenames = []
-event_number = 0
-for root, dirs, files in os.walk(maindir):
-    if target_filename in files:
-        tmp = root.split('/')
-        if 0:
-            if not tmp[-1].startswith('9'):continue
-        tmp = tmp[-1].split('_')
-        event_number += int(tmp[1])
-        rel_path = os.path.relpath(os.path.join(root, target_filename), start=maindir)
-        filenames.append(rel_path)
-print("event_number = ", event_number)
-# Now call the function
-myTree = chainTheFiles(maindir, filenames, treename='cbmsim')
-sTree = myTree
-
-# f = ROOT.TFile(options.inputFile)
-# sTree = f.Get("cbmsim")
-# print("sTree: opened file "+options.inputFile)
-# print("sTree has %d"%sTree.GetEntries()+" entries")
-# myfile = options.inputFile
-# #myfile = (options.inputFile).replace(".root","_copy.root")
-# myf = ROOT.TFile(myfile)
-# myTree = myf.Get("cbmsim")
-# print("myTree: opened file "+myfile)
+f = ROOT.TFile(options.inputFile)
+sTree = f.Get("cbmsim")
+print("sTree: opened file "+options.inputFile)
+print("sTree has %d"%sTree.GetEntries()+" entries")
+myfile = options.inputFile
+os.system('cp '+options.inputFile+' '+(options.inputFile).replace(".root","_copy.root"))
+myfile = (options.inputFile).replace(".root","_copy.root")
+myf = ROOT.TFile(myfile)
+myTree = myf.Get("cbmsim")
+print("myTree: opened file "+myfile)
 print("myTree has %d"%myTree.GetEntries()+" entries")
 print("sTree has %d"%sTree.GetEntries()+" entries")
 
@@ -146,7 +114,6 @@ log={}
 h = {}
 #ut.bookHist(h,'Doca','Doca between two tracks',100,0.,10.)
 # ----------add combinatorial loop, massi:
-ut.bookHist(h,'WeightedComb','weighted comb vertex XZ taking B into account',1000,-60.0,40.0,80,-4.0,4.0)
 ut.bookHist(h,'CombVtxZWithB','comb vertex XZ taking B into account',1000,-60.0,40.0,80,-4.0,4.0)
 ut.bookHist(h,'CombDocaNoB','Doca between two comb tracks without taking B into account',250,0.,25.)
 ut.bookHist(h,'CombDocaWithB','Doca between two comb tracks with B taken into account',250,0.,25.)
@@ -154,7 +121,6 @@ ut.bookHist(h,'CombDocaWithVsNoB' ,'Doca comparison with/without B' ,250,.0,25.0
 ut.bookHist(h,'Y vs X straight','straight extrap used',40,-200.0,200.0,40,-200.0,200.0)
 ut.bookHist(h,'Y vs X tool'    ,'tool extrap used'    ,40,-200.0,200.0,40,-200.0,200.0)
 ut.bookHist(h,'dist straight vs tool','dist straight vs tool at UBT',40,0.0,40.0)
-ut.bookHist(h,'Weight', 'Weighted Distribution of the Background Muons', 10000, 0, 1000)
 # ----------end combinatorial loop, massi
 
 ###################################################################
@@ -283,12 +249,6 @@ def makePlots():
     h['CombVtxZWithB'].SetYTitle('X / m')
     h['CombVtxZWithB'].Draw()
 
-    ut.bookCanvas(h,key='Weighted combinatorial vertices',title='Weighted vertex XZ positon with B in extrap'+strZnoB,nx=800,ny=800,cx=1,cy=1)
-    cv = h['WeightedComb']
-    h['CombVtxZWithB'].SetXTitle('Z / m')
-    h['CombVtxZWithB'].SetYTitle('X / m')
-    h['CombVtxZWithB'].Draw()
-
     ut.bookCanvas(h,key='combinatorial analysis',title='DOCA(2 comb tracks) with/out B'+strZnoB,nx=2450,ny=800,cx=3,cy=1)
     cv = h['combinatorial analysis'].cd(1)
     h['CombDocaNoB'].SetXTitle('Combinatorial DOCA [cm]')
@@ -302,13 +262,6 @@ def makePlots():
     h['CombDocaWithVsNoB'].SetXTitle('Combinatorial DOCA without B  [cm]')
     h['CombDocaWithVsNoB'].SetYTitle('Combinatorial DOCA with B  [cm]')
     h['CombDocaWithVsNoB'].Draw()
-
-    ut.bookCanvas(h,key='Weight Background Muons',title='vWeight Background Muons',nx=800,ny=800,cx=1,cy=1)
-    cv = h['Weight']
-    h['Weight'].SetXTitle('W / Rate')
-    h['Weight'].SetYTitle('count')
-    h['Weight'].Draw()
-
 
     print('finished making plots')
     return
@@ -341,9 +294,8 @@ def myEventLoop(n):
        if not fitStatus.isFitConverged() : 
           print("fitStatus.isFitConverged() is False"+" ......... skip")
           continue
-       if nmeas < measCut:
-          print(f"Number of point stored in The Track in ShipDigiReco: {atrack.getNumPointsWithMeasurement()}")
-          print("nmeas (ndof) = %d"%nmeas+" < measCut (selected by user)= %d"%measCut+" ......... skip")
+       if nmeas < measCut: 
+          print("nmeas = %d"%nmeas+" < measCut = %d"%measCut+" ......... skip")
           continue
        fittedTracks[key] = atrack
   #   needs different study why fit has not converged, continue with fitted tracks
@@ -366,7 +318,6 @@ def myEventLoop(n):
           continue
        Ptruth_start   = mcPart.GetP()
        Ptruthz_start  = mcPart.GetPz()
-       Wa = mcPart.GetWeight()
        Ptruth,Ptruthx,Ptruthy,Ptruthz = getPtruthFirst(sTree,mcPartKey) # get p truth from first strawpoint
        delPOverP = (Ptruth - P)/Ptruth
        delPOverPz = (1./Ptruthz - 1./Pz) * Ptruthz
@@ -393,9 +344,8 @@ def myEventLoop(n):
       #print("  Compare straight vs tool extrapolation at Z = %6.2f"%Zubt+" cm")
       #print("    straight X,Y: %9.6f"%Xubt     +" %9.6f"%Yubt     )
       #print("        tool X,Y: %9.6f"%_pos.x() +" %9.6f"%_pos.y() )
-       h['Y vs X straight'].Fill(Xubt,Yubt, Wa)
-       h['Y vs X tool'].Fill(_pos.x(),_pos.y(), Wa)
-       h['Weight'].Fill(Wa)
+       h['Y vs X straight'].Fill(Xubt,Yubt)
+       h['Y vs X tool'].Fill(_pos.x(),_pos.y())
        distanza = ROOT.TMath.Sqrt( (_pos.x()-Xubt)**2 + (_pos.y()-Yubt)**2 ) 
        h['dist straight vs tool'].Fill(distanza)
   #   ----------add combinatorial loop, massi:
@@ -407,25 +357,19 @@ def myEventLoop(n):
        atr_pos = ROOT.TVector3(aPos)
        atr_dir = ROOT.TVector3(aMom.x()/aMom.Mag(),aMom.y()/aMom.Mag(),aMom.z()/aMom.Mag())
        #print("    m  mykey mynmeas (  Px  ,  Py  ,  Pz  ) ")
-       for m in Significant_Events: # for m in range(n+1,sTree.GetEntries()):
-           if m <= n : continue
+       for m in range(n+1,nEvents): # for m in range(n+1,sTree.GetEntries()):
            myrc = myTree.GetEntry(m)
            mykey = -1
            myfittedTracks = {}
            try:
             for btrack in myTree.FitTracks:
+                  print("This has FitTracks:", m)
                   mykey+=1
                   myfitStatus   = btrack.getFitStatus()
                   mynmeas = myfitStatus.getNdf()
                   if not myfitStatus.isFitConverged() : continue
                   if mynmeas < measCut: continue
-                  myfittedTracks[mykey] = btrack
-                  mymcPartKey = myTree.fitTrack2MC[key]
-                  mymcPart    = myTree.MCTrack[mymcPartKey]
-                  if not mymcPart :
-                     print("no mcPart found"+" ......... skip")
-                     continue
-                  Wb = mymcPart.GetWeight()
+                  myfittedTracks[key] = btrack
                   myfittedState = btrack.getFittedState()
                   myP = myfittedState.getMomMag()
                   myPx,myPy,myPz = myfittedState.getMom().x(),myfittedState.getMom().y(),myfittedState.getMom().z()
@@ -439,7 +383,6 @@ def myEventLoop(n):
                   myxv, myyv, myzv, mydoca = MyVertex( atrack_pos , atrack_dir , btrack_pos , btrack_dir ) # no B taken into account !
                   abxv, abyv, abzv, abdoca = MyVertex( atr_pos , atr_dir , btr_pos , btr_dir )       
                   h['CombVtxZWithB'].Fill(abzv/100.0,abxv/100.0)
-                  h['WeightedComb'].Fill(abzv/100,abxv/100,Wa*Wb)
                   if abzv > Znofield: # not correct linear extrapolation ! vertex must be re-done !
                      abdoca = 100000.0 # large number, sent to overflow bin
                   if Debug and m-n<3: 
@@ -459,9 +402,9 @@ def myEventLoop(n):
                   h['CombDocaNoB'].Fill(mydoca)
                   h['CombDocaWithB'].Fill(abdoca)
                   h['CombDocaWithVsNoB'].Fill(mydoca,abdoca)
-           except Exception as e:
-            print(f"Exception in inner loop: {e}")
+           except:
             continue
+            #print("This has no FitTracks:", m)
 ###################################################################
 
 if showB: # show some B field profile
@@ -473,28 +416,7 @@ if showB: # show some B field profile
 sTree.GetEvent(0)
 nEvents = min(sTree.GetEntries(),options.nEvents)
 print("Will process %i"%nEvents+" events")
-t1 = time()
-print("Initialization time: ", t1-t0)
 
-# Event/track classification counters
-Reconstructed_tracks_not_valids = 0
-skipped_events = 0
-
-# Reasons for rejection
-Reconstructed_tracks_not_valids_less_4_tracking_stations = 0
-Reconstructed_tracks_not_valids_chi2 = 0
-Reconstructed_tracks_not_valids_Fit_tracks = 0
-Reconstructed_tracks_not_valids_Outsdie_decay_vessel = 0
-Reconstructed_tracks_not_valids_FitStatus_not_converged = 0
-Reconstructed_tracks_not_valids_nmeas_under_25 = 0
-
-# Store important event identifiers if needed
-Significant_Events = []
-
-# for debug
-data = {}
-
-#Fist Loop to remove invalid tracks
 for n in range(nEvents):
     rc = sTree.GetEntry(n)
     # Check if the event has FitTracks (e.g., FitTracks_PR or FitTracks)
@@ -502,200 +424,23 @@ for n in range(nEvents):
     measCut = measCutFK
 
     if sTree.GetBranch("FitTracks_PR") and len(sTree.FitTracks_PR) > 0:
-      sTree.FitTracks = sTree.FitTracks_PR
-      measCut = measCutPR
-      fit_tracks = sTree.FitTracks
+        sTree.FitTracks = sTree.FitTracks_PR
+        measCut = measCutPR
+        fit_tracks = sTree.FitTracks
     elif sTree.GetBranch("FitTracks") and len(sTree.FitTracks) > 0:
-      fit_tracks = sTree.FitTracks
+        fit_tracks = sTree.FitTracks
 
     if fit_tracks is None:
-      skipped_events+=1
-      continue
-    else:
-      print("========= Pre-selected event %d"%n+" =========================")
-      if len(sTree.FitTracks)>1: 
-         print(f"len(sTree.FitTracks) = {len(sTree.FitTracks)}"+" ......... skip")
-         Reconstructed_tracks_not_valids_Fit_tracks+=1
-         continue
-      if not checkFiducialVolume(sTree,0,dy): 
-         print("checkFiducialVolume(sTree,key,dy) is False"+" ......... skip")
-         Reconstructed_tracks_not_valids_Outsdie_decay_vessel+=1 
-         continue
-      fitStatus   = sTree.FitTracks[0].getFitStatus()
-      if not fitStatus.isFitConverged() : 
-         print("fitStatus.isFitConverged() is False"+" ......... skip")
-         Reconstructed_tracks_not_valids_FitStatus_not_converged+=1
-         continue
-      nmeas = fitStatus.getNdf()
+        print(f"Event {n} skipped: no reconstructed tracks.")
+        continue
 
-      rchi2 = fitStatus.getChi2()
-      #prob = ROOT.TMath.Prob(rchi2,int(nmeas))
-      chi2 = rchi2/nmeas
-      print("Chi2:",chi2)
-      if chi2>chi2CutOff:
-          print("chi2 = %d"%chi2+" > chi2CutOff = %d"%chi2CutOff+" ......... skip")
-          Reconstructed_tracks_not_valids_chi2 +=1
-          continue
+    myEventLoop(n)
+    sTree.FitTracks.Delete()
 
 
-      if nmeas < measCut:
-         stations_hit = set()  # Will collect unique station identifiers
-         for i in range(len(sTree.strawtubesPoint)):
-            p = sTree.strawtubesPoint[i]
-            stations_hit.add(int(p.GetDetectorID() // 10**6)) # first digit identify the tracking station
-            print(f"{p.GetTrackID()} {p.GetX()} {p.GetY()} {p.GetZ()} {p.GetPx()} {p.GetPy()} {p.GetPz()} {p.GetTime()} {p.GetDetectorID()}")
-         if len(stations_hit) < 4:
-            print(f"Rejecting track: only {len(stations_hit)} stations hit.")
-            Reconstructed_tracks_not_valids_less_4_tracking_stations +=1
-
-         if 0:
-            for track in sTree.FitTracks:
-               rep = track.getCardinalRep()
-               nPoints = track.getNumPoints()
-               print(f"\nTrack has {nPoints} TrackPoints")
-
-               for i in range(nPoints):
-                  tp = track.getPoint(i)
-                  if not tp:
-                        continue
-
-                  print(f"\nTrackPoint #{i}: Sorting parameter = {tp.getSortingParameter()}")
-
-                  # Raw measurement info
-                  meas = tp.getRawMeasurement()
-                  if meas:
-                        try:
-                           detId = meas.getDetId()
-                           hitId = meas.getHitId()
-                           coords = meas.getRawHitCoords()  # Usually a vector or array
-                           print(f"  RawMeasurement: detId={detId}, hitId={hitId}")
-                           print(f"  Raw hit coordinates: {list(coords)}")
-                        except Exception as e:
-                           print(f"  Could not get raw measurement coords: {e}")
-                  else:
-                        print("  No raw measurement.")
-
-                  # Fitted state info
-                  fi = tp.getFitterInfo(rep)
-                  if fi:
-                        try:
-                           fittedState = fi.getFittedState()
-                           pos = fittedState.getPos()
-                           mom = fittedState.getMom()
-                           print(f"  Fitted Position: x={pos.X():.3f}, y={pos.Y():.3f}, z={pos.Z():.3f}")
-                           print(f"  Fitted Momentum: px={mom.X():.3f}, py={mom.Y():.3f}, pz={mom.Z():.3f}")
-                        except Exception as e:
-                           print(f"  Could not get fitted state: {e}")
-                  else:
-                        print("  No fitter info available.")
-
-
-
-               # Collect strawtubesPoint info grouped by TrackID
-               for i in range(len(sTree.strawtubesPoint)):
-                  p = sTree.strawtubesPoint[i]
-                  track_id = n#p.GetTrackID()
-
-                  entry = {
-                     "pos": (p.GetX(), p.GetY(), p.GetZ()),
-                     "mom": (p.GetPx(), p.GetPy(), p.GetPz()),
-                  }
-
-                  if track_id not in data:
-                     data[track_id] = {
-                           "strawtubesPoints": {
-                              "pos": [],
-                              "mom": [],
-                           },
-                           "fitTracks": {
-                              "rawMeasurement": [],
-                              "pos": [],
-                              "mom": [],
-                              "chi2": [],
-                           }
-                     }
-
-                  data[track_id]["strawtubesPoints"]["pos"].append(entry["pos"])
-                  data[track_id]["strawtubesPoints"]["mom"].append(entry["mom"])
-
-               # Collect FitTracks info (fitted points)
-               for track in sTree.FitTracks:
-                  rep = track.getCardinalRep()
-                  nPoints = track.getNumPoints()
-
-                  for i in range(nPoints):
-                     tp = track.getPoint(i)
-                     if not tp:
-                           continue
-
-                     # Raw measurement
-                     meas = tp.getRawMeasurement()
-                     if meas:
-                           try:
-                              coords = list(meas.getRawHitCoords())
-                              raw_measurement = coords
-                           except Exception:
-                              raw_measurement = None
-                     else:
-                           raw_measurement = None
-
-                     # Fitted position and momentum
-                     fi = tp.getFitterInfo(rep)
-                     if fi:
-                           try:
-                              fittedState = fi.getFittedState()
-                              pos = fittedState.getPos()
-                              mom = fittedState.getMom()
-                              pos_tuple = (pos.X(), pos.Y(), pos.Z())
-                              mom_tuple = (mom.X(), mom.Y(), mom.Z())
-                           except Exception:
-                              pos_tuple = None
-                              mom_tuple = None
-                     else:
-                           pos_tuple = None
-                           mom_tuple = None
-
-                     # Append to the data dictionary
-                     data[track_id]["fitTracks"]["rawMeasurement"].append(raw_measurement)
-                     data[track_id]["fitTracks"]["pos"].append(pos_tuple)
-                     data[track_id]["fitTracks"]["mom"].append(mom_tuple)
-                     data[track_id]["fitTracks"]['chi2'].append(chi2)
-
-               # Save to pickle
-               with open("track_data.pkl", "wb") as f:
-                  pickle.dump(data, f)
-
-         print(f"Number of point stored in The Track in ShipDigiReco: {sTree.FitTracks[0].getNumPointsWithMeasurement()}")
-         print("nmeas (ndof) = %d"%nmeas+" < measCut (selected by user)= %d"%measCut+" ......... skip")
-         Reconstructed_tracks_not_valids_nmeas_under_25+=1
-         continue
-
-    print("========= selected event %d"%n+" =========================")
-    Significant_Events.append(n)
-
-t2 = time()
-
-Reconstructed_tracks_not_valids = Reconstructed_tracks_not_valids_Fit_tracks + Reconstructed_tracks_not_valids_FitStatus_not_converged + Reconstructed_tracks_not_valids_chi2 + Reconstructed_tracks_not_valids_nmeas_under_25 + Reconstructed_tracks_not_valids_Outsdie_decay_vessel
-print("\n===== Track Reconstruction Summary =====")
-print("Time needed to select the events: ",t2-t1)
-print(f"Total Events analyzed: {event_number}")
-print(f"Skipped events: {skipped_events}")
-print(f"Valid reconstructed tracks: {len(Significant_Events)}")
-print(f"Invalid reconstructed tracks: {Reconstructed_tracks_not_valids}")
-print(f" - FitTracks missing: {Reconstructed_tracks_not_valids_Fit_tracks}")
-print(f" - Fit did not converge: {Reconstructed_tracks_not_valids_FitStatus_not_converged}")
-print(f" - Chi2/NDF too large: {Reconstructed_tracks_not_valids_chi2}")
-print(f" - N measurements < 25: {Reconstructed_tracks_not_valids_nmeas_under_25}")
-print(f" - N measurements < 25  and <4 tracking stations hit: {Reconstructed_tracks_not_valids_less_4_tracking_stations}")
-print(f" - Outside decay vessel: {Reconstructed_tracks_not_valids_Outsdie_decay_vessel}")
-
-for n in Significant_Events:
-   myEventLoop(n)
-   sTree.FitTracks.Delete()
-t3 = time()
-print("time for myEventLoop: ",t3-t2)
 if doPlots: 
-   makePlots()  
+   makePlots()
+
 
 # output histograms
 hfile = options.inputFile.split(',')[0].replace('_rec','_ana')
@@ -706,8 +451,6 @@ if "/eos" in hfile or not options.inputFile.find(',')<0:
 ROOT.gROOT.cd()
 ut.writeHists(h,hfile)
 
-print("Total Events:", len(Significant_Events))
-print("Skipped Events", len(skipped_events))
 
 # 0_400000_9600001
 # 39_400000_1/

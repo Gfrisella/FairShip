@@ -21,6 +21,9 @@ import global_variables
 import rootUtils as ut
 import shipunit as u
 import shipRoot_conf
+import shutil
+import time
+
 
 shipRoot_conf.configure()
 
@@ -29,6 +32,9 @@ parser = ArgumentParser()
 parser.add_argument("-f", "--inputFile", dest="inputFile", help="Input file", required=True)
 parser.add_argument("-n", "--nEvents",   dest="nEvents",   help="Number of events to reconstruct", required=False,  default=999999,type=int)
 parser.add_argument("-g", "--geoFile",   dest="geoFile",   help="ROOT geofile", required=True)
+parser.add_argument("-d", "--directory", dest="directory", help="the directory of the file", required=False, default='')
+parser.add_argument("-if", "--initialFile", dest="InitFile", help="the initial File", required=False, default='')
+parser.add_argument("-Of", "--OnlyOneFile", dest="OneFile", help="If you want to analyze only one File", required=False, action="store_true")
 parser.add_argument("--noVertexing",     dest="noVertexing", help="switch off vertexing", required=False, action="store_true")
 parser.add_argument("--noStrawSmearing", dest="withNoStrawSmearing", help="no smearing of distance to wire, default on", required=False, action="store_true")
 parser.add_argument("--withT0",          dest="withT0", help="simulate arbitrary T0 and correct for it", required=False, action="store_true")
@@ -47,6 +53,22 @@ options = parser.parse_args()
 vertexing = not options.noVertexing
 
 if options.EcalDebugDraw: ROOT.gSystem.Load("libASImage")
+
+
+# Base directory where the subdirectories live
+maindir = options.directory  # 🔁 CHANGE THIS
+
+
+# Filenames
+input_filename = options.inputFile
+geo_filename = options.geoFile
+
+# Traverse subdirectories
+for subdir, _, files in os.walk(maindir):
+    if input_filename in files and geo_filename in files:
+        outFile = os.path.join(subdir, input_filename)
+        geo_filename = os.path.join(subdir, geo_filename)
+        break
 
 # need to figure out which geometry was used, only needed if no geo file
 if not options.dy:
@@ -67,16 +89,16 @@ else:
   outFile = options.inputFile.replace('.root','_rec.root')
 # outfile should be in local directory
   tmp = outFile.split('/')
-  #outFile = tmp[len(tmp)-1]
+  outFile = tmp[len(tmp)-1]
   if options.inputFile[:7]=="root://" : os.system('xrdcp '+options.inputFile+' '+outFile)
   elif options.saveDisk: os.system('mv '+options.inputFile+' '+outFile)
-  else :       os.system('cp '+options.inputFile+' '+outFile)
+  #else :       os.system('cp '+options.inputFile+' '+outFile)
 
 if not options.geoFile:
  tmp = options.inputFile.replace('ship.','geofile_full.')
  options.geoFile = tmp.replace('_rec','')
 
-fgeo = ROOT.TFile.Open(options.geoFile)
+fgeo = ROOT.TFile.Open(geo_filename)
 geoMat =  ROOT.genfit.TGeoMaterialInterface()  # if only called in ShipDigiReco -> crash, reason unknown
 
 from ShipGeoConfig import ConfigRegistry
@@ -132,16 +154,32 @@ global_variables.iEvent = 0
 # import reco tasks
 import shipDigiReco
 
-SHiP = shipDigiReco.ShipDigiReco(outFile,fgeo)
-options.nEvents   = min(SHiP.sTree.GetEntries(),options.nEvents)
-# main loop
-for global_variables.iEvent in range(options.firstEvent, options.nEvents):
-    if global_variables.iEvent % 1000 == 0 or global_variables.debug:
-        print('event ', global_variables.iEvent)
-    rc = SHiP.sTree.GetEvent(global_variables.iEvent)
-    SHiP.digitize()
-    SHiP.reconstruct()
- # memory monitoring
- # mem_monitor()
-# end loop over events
-SHiP.finish()
+temp = 1
+for subdir, _, files in os.walk(maindir):
+    if options.inputFile in files and options.geoFile in files:
+        print("The directory analyzed is:",subdir)
+        if subdir.split('/')[-1] == options.InitFile: temp = 0
+        if temp and options.InitFile != '': continue
+        origin = os.path.join(subdir, options.inputFile)
+        new = origin.replace('.root','_rec.root')
+        
+        if os.path.exists(new):
+            os.remove(new)
+            print(f"Removed existing file: {new}")
+        os.system('cp '+ origin +' ' + new)
+        time.sleep(2)  # sleeps for 10 seconds
+        SHiP = shipDigiReco.ShipDigiReco(new,fgeo)
+        options.nEvents   = min(SHiP.sTree.GetEntries(),options.nEvents)
+        # main loop
+        for global_variables.iEvent in range(options.firstEvent, options.nEvents):
+            if global_variables.iEvent % 1000 == 0 or global_variables.debug:
+                print('event ', global_variables.iEvent)
+            rc = SHiP.sTree.GetEvent(global_variables.iEvent)
+            SHiP.digitize()
+            SHiP.reconstruct()
+        # memory monitoring
+        # mem_monitor()
+        # end loop over events
+        SHiP.finish()
+        if options.OneFile: break
+

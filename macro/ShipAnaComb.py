@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
-import sys
 import pickle
 import ROOT
+import numpy as np
 import ctypes
 import rootUtils as ut
 import shipunit as u
@@ -81,27 +80,17 @@ for root, dirs, files in os.walk(maindir):
     if target_filename in files:
         tmp = root.split('/')
         if 0:
-            if not tmp[-1].startswith('9'):continue
+            if not tmp[-1].startswith(('1_400000_1')):continue
         tmp = tmp[-1].split('_')
         event_number += int(tmp[1])
         rel_path = os.path.relpath(os.path.join(root, target_filename), start=maindir)
+        
         filenames.append(rel_path)
 print("event_number = ", event_number)
 # Now call the function
-myTree = chainTheFiles(maindir, filenames, treename='cbmsim')
-sTree = myTree
-
-# f = ROOT.TFile(options.inputFile)
-# sTree = f.Get("cbmsim")
-# print("sTree: opened file "+options.inputFile)
-# print("sTree has %d"%sTree.GetEntries()+" entries")
-# myfile = options.inputFile
-# #myfile = (options.inputFile).replace(".root","_copy.root")
-# myf = ROOT.TFile(myfile)
-# myTree = myf.Get("cbmsim")
-# print("myTree: opened file "+myfile)
-print("myTree has %d"%myTree.GetEntries()+" entries")
-print("sTree has %d"%sTree.GetEntries()+" entries")
+if 0: 
+    sTree = chainTheFiles(maindir, filenames, treename='cbmsim')
+    print("sTree has %d"%sTree.GetEntries()+" entries")
 
 if not options.geoFile:
  options.geoFile = options.inputFile.replace('ship.','geofile_full.').replace('_rec.','.')
@@ -158,6 +147,141 @@ ut.bookHist(h,'Weight', 'Weighted Distribution of the Background Muons', 10000, 
 # ----------end combinatorial loop, massi
 
 ###################################################################
+
+def extract_track_data(sTree,chi2,real_track = False):
+    data = {
+                "strawtubesPoints": {
+                    "track_id":[],
+                    "pos": [],
+                    "mom": [],
+                    "W": [],
+                    "pid": [],
+                },
+                "fitTracks": {
+                    "track_number": [],
+                    "rawMeasurement": [],
+                    "pos": [],
+                    "mom": [],
+                    "chi2": [],
+                },
+                "OutputInfo": {
+                  "Xubt": [],
+                  "Yubt": [],
+                  "W": [],
+                  "UBT_rel_dist": [],
+
+                },
+                # Store all info in a dict keyed by track_number
+                "track_positions" : {
+                  "fitted_pos": [],
+                  "fitted_dir": [],
+                  "extrapolated_pos": [],
+                  "extrapolated_dir": [],
+                  "W": [],
+               }
+            }
+    # --- Collect strawtubesPoint info grouped by TrackID ---
+    for i in range(len(sTree.strawtubesPoint)):
+        p = sTree.strawtubesPoint[i]
+        mcPartKey = sTree.fitTrack2MC[0]
+        mcPart = sTree.MCTrack[mcPartKey]
+        #track_id = n #p.GetTrackID()
+
+        entry = {
+            "track_id": [p.GetTrackID()],
+            "pos": (p.GetX(), p.GetY(), p.GetZ()),
+            "mom": (p.GetPx(), p.GetPy(), p.GetPz()),
+            "W": mcPart.GetWeight(),
+            "pid": mcPart.GetPdgCode()
+        }            
+        data["strawtubesPoints"]["track_id"].append(entry["track_id"])
+        data["strawtubesPoints"]["pos"].append(entry["pos"])
+        data["strawtubesPoints"]["mom"].append(entry["mom"])
+    data["strawtubesPoints"]["W"].append(entry["W"])
+    data["strawtubesPoints"]["pid"].append(entry["pid"])
+
+
+    # --- Collect FitTracks info (fitted points) ---
+    for track_number, track in enumerate(sTree.FitTracks):
+        rep = track.getCardinalRep()
+        nPoints = track.getNumPoints()
+        extrapolated_once = False
+        if real_track:
+         extrapolated_once = True
+         _,_pos,_ = TrackExtrapolateTool.extrapolateToPlane(track,Zubt) # extrapolated pos @UBT
+         _,aPos,aMom = TrackExtrapolateTool.extrapolateToPlane(track,Znofield) # extrapolated pos and mom @Znofield
+
+        for i in range(nPoints):
+            tp = track.getPoint(i)
+            if not tp:
+                continue
+
+            # Raw measurement
+            meas = tp.getRawMeasurement()
+            if meas:
+                try:
+                    coords = list(meas.getRawHitCoords())
+                    raw_measurement = coords
+                except Exception:
+                    raw_measurement = None
+            else:
+                raw_measurement = None
+
+            # Fitted position and momentum
+            fi = tp.getFitterInfo(rep)
+            if fi:
+                try:
+                    fittedState = fi.getFittedState()
+                    pos = fittedState.getPos()
+                    mom = fittedState.getMom()
+                    pos_tuple = (pos.X(), pos.Y(), pos.Z())
+                    mom_tuple = (mom.X(), mom.Y(), mom.Z())
+                    if extrapolated_once:
+                     Xubt = pos.X() + (Zubt-pos.Z())*mom.X()/mom.Z()
+                     Yubt = pos.Y() + (Zubt-pos.Z())*mom.Y()/mom.Z()
+                     UBT_rel_dist = ROOT.TMath.Sqrt( (_pos.x()-Xubt)**2 + (_pos.y()-Yubt)**2 )
+                     atrack_pos = ROOT.TVector3(atrack.getFittedState().getPos()) # no B taken into account !
+                     atrack_dir = ROOT.TVector3(atrack.getFittedState().getDir()) # no B taken into account ! 
+                     extrapolated_once = False
+                except Exception:
+                    pos_tuple = None
+                    mom_tuple = None
+                    atrack_pos = atrack_dir = None
+                    Xubt = Yubt = UBT_rel_dist = None
+                    extrapolated_once = False 
+            else:
+                pos_tuple = None
+                mom_tuple = None
+                atrack_pos = atrack_dir = None
+                Xubt = Yubt = UBT_rel_dist = None 
+                extrapolated_once = False
+            # Append to data
+            data["fitTracks"]["track_number"].append(track_number)
+            data["fitTracks"]["rawMeasurement"].append(raw_measurement)
+            data["fitTracks"]["pos"].append(pos_tuple)
+            data["fitTracks"]["mom"].append(mom_tuple)
+               # Step 1: Global dictionary to store track positions
+        
+         # the just above is the state at T1 entrance ? Not right! there is B field before T1!! 
+         # => Get it just upstream T1, where no field:
+        if real_track:
+         atr_pos = ROOT.TVector3(aPos)
+         atr_dir = ROOT.TVector3(aMom.x()/aMom.Mag(),aMom.y()/aMom.Mag(),aMom.z()/aMom.Mag())
+         data["OutputInfo"]["Xubt"].append(Xubt)
+         data["OutputInfo"]["Yubt"].append(Yubt)
+         data["OutputInfo"]["UBT_rel_dist"].append(UBT_rel_dist)
+         data["track_positions"]["fitted_pos"].append(atrack_pos)
+         data["track_positions"]["fitted_dir"].append(atrack_dir)
+         data["track_positions"]["extrapolated_pos"].append(atr_pos)
+         data["track_positions"]["extrapolated_dir"].append(atr_dir)
+         data["track_positions"]["W"].append(entry["W"])
+
+        data["fitTracks"]["chi2"].append(chi2)
+        data["OutputInfo"]["W"].append(entry["W"])
+        
+
+    return data
+
 def dist2InnerWall(X,Y,Z):
   dist = 0
  # return distance to inner wall perpendicular to z-axis, if outside decayVolume return 0.
@@ -190,6 +314,83 @@ def checkFiducialVolume(sTree,tkey,dy):
    if not rc: return False
    if not dist2InnerWall(pos.X(),pos.Y(),pos.Z())>0: return False
    return inside
+
+def CheckVertexInFiducialVolume(abxv, abyv, abzv):
+    # Define z bounds
+    z1, z2 = 3270, 8300
+    if not (z1 <= abzv <= z2):
+        # print("z too big")
+        return False
+
+    # Linear interpolation for half-widths at abzv
+    x_half = 0.5*100 + (abzv - z1) * (2.0*100 - 0.5*100) / (z2 - z1)
+    y_half = 1.35*100 + (abzv - z1) * (3.0*100 - 1.35*100) / (z2 - z1)
+
+    # if not abs(abxv) <= x_half : print(f"x too big {abxv} > {x_half} ")
+    # if not abs(abyv) <= x_half : print(f"x too big {abyv} > {y_half} ")
+    # Check if point is inside current trapezoid cross-section
+    return abs(abxv) <= x_half and abs(abyv) <= y_half
+
+
+def backtrack_to_z0(abxv, abyv, abzv, res_vec):
+    """
+    Backtrack position (abxv, abyv, abzv) along direction vector res_vec to z=0.
+
+    Parameters:
+        abxv, abyv, abzv: float - initial position coordinates
+        res_vec: ROOT.TVector3 - direction vector (assumed normalized or not)
+
+    Returns:
+        TVector3 - backtracked position at z=0
+    """
+    vz = res_vec.Z()
+    if vz == 0:
+        raise ValueError("Direction vector Z component is zero; cannot backtrack.")
+
+    t = -abzv / vz  # since target z = 0
+    x = abxv + t * res_vec.X()
+    y = abyv + t * res_vec.Y()
+    z = 0.0
+
+    return ROOT.TVector3(x, y, z)
+
+
+def backtrack_radius_to_z0(abxv, abyv, abzv, res_vec):
+    """
+    Backtrack position (abxv, abyv, abzv) along direction vector res_vec to z=0,
+    then return the transverse radius sqrt(x^2 + y^2) at that point.
+
+    Parameters:
+        abxv, abyv, abzv: float - initial position coordinates
+        res_vec: ROOT.TVector3 - direction vector (can be normalized or not)
+
+    Returns:
+        float - transverse radius at z=0
+    """
+    vz = res_vec.Z()
+    if vz == 0:
+        raise ValueError("Direction vector Z component is zero; cannot backtrack.")
+
+    t = -abzv / vz  # parameter to reach z=0
+    x = abxv + t * res_vec.X()
+    y = abyv + t * res_vec.Y()
+
+    radius = ROOT.TMath.Sqrt(x**2 + y**2)
+    return radius
+
+
+def reconstruct_parent_mass(m1, p1_vec, m2, p2_vec):
+    # Convert to energies
+    E1 = ROOT.TMath.Sqrt(p1_vec.Mag2() + m1**2)
+    E2 = ROOT.TMath.Sqrt(p2_vec.Mag2() + m2**2)
+
+    # Total momentum and energy
+    total_p = p1_vec + p2_vec
+    total_E = E1 + E2
+
+    # Invariant mass
+    M2 = total_E**2 - total_p.Mag2()
+    return ROOT.TMath.Sqrt(M2) if M2 > 0 else 0.0
 
 def getPtruthFirst(sTree,mcPartKey):
    Ptruth,Ptruthx,Ptruthy,Ptruthz = -1.,-1.,-1.,-1.
@@ -224,6 +425,41 @@ def MyVertex(a,u,c,v):
    Y = c.y()+v.y()*t
    Z = c.z()+v.z()*t
    return X,Y,Z,abs(dist)
+
+def DOCAfromP(Q1, P_1, Q2, P_2):
+    """
+    Calculate the minimum distance of approach (DOCA) between two lines in 3D space.
+    Assumes P_1 and P_2 are already normalized ROOT.TVector3 objects.
+    
+    Parameters:
+        Q1, Q2: ROOT.TVector3 points on each line
+        P_1, P_2: Normalized ROOT.TVector3 direction vectors
+        
+    Returns:
+        x, y, z: Coordinates of the midpoint of closest approach
+        distance: DOCA between the two lines
+    """
+    q1 = np.array([Q1.X(), Q1.Y(), Q1.Z()])
+    q2 = np.array([Q2.X(), Q2.Y(), Q2.Z()])
+    e1 = np.array([P_1.X(), P_1.Y(), P_1.Z()])
+    e2 = np.array([P_2.X(), P_2.Y(), P_2.Z()])
+
+    n = np.cross(e1, e2)
+    norm_n = np.linalg.norm(n)
+
+    if np.round(norm_n, 6) == 0:
+        # Lines are parallel
+        return None, None, None, float('inf')
+
+    t1 = np.dot((q2 - q1), np.cross(e2, n)) / np.dot(n, n)
+    t2 = np.dot((q2 - q1), np.cross(e1, n)) / np.dot(n, n)
+
+    closest_point_1 = q1 + t1 * e1
+    closest_point_2 = q2 + t2 * e2
+    middle_point = (closest_point_1 + closest_point_2) / 2.0
+    distance = np.linalg.norm(closest_point_2 - closest_point_1)
+
+    return middle_point[0], middle_point[1], middle_point[2], distance
 
 def getBfield(zstart,zend,nsteps=100):
     # fieldMaker.SetPlotOption("SURF3")
@@ -314,154 +550,163 @@ def makePlots():
     return
 
 def myEventLoop(n):
-    rc = sTree.GetEntry(n)
-    print("========= Got event %d"%n+" =========================")
-    # check if tracks are made from real pattern recognition, if not adapt cut
-    measCut = measCutFK
-    if sTree.GetBranch("FitTracks_PR"):
-       sTree.FitTracks = sTree.FitTracks_PR
-       measCut = measCutPR
-    if sTree.GetBranch("fitTrack2MC_PR"):  sTree.fitTrack2MC = sTree.fitTrack2MC_PR
-    if sTree.GetBranch("Particles_PR"):    sTree.Particles   = sTree.Particles_PR
+    ar = Significant_data[n].setdefault("Analysis_results", {})
+    ar.setdefault("doca_B", [])
+    ar.setdefault("doca_noB", [])
+    ar.setdefault("m", [])
+    ar.setdefault("W", [])
+    ar.setdefault("Fail_status", [])
+    ar.setdefault("Inv_mass", [])
 
-    key = -1
-    fittedTracks = {}
-    lenfittracks = "len(sTree.FitTracks) = %d"%len(sTree.FitTracks)
-    if len(sTree.FitTracks)>1: lenfittracks += "   this cannot be!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    print(lenfittracks)
-  # ---------- massi add track extrapolation, massi: rep is a Track representation
-    for atrack in sTree.FitTracks:
-       key+=1
-  #   kill tracks outside fiducial volume
-       if not checkFiducialVolume(sTree,key,dy): 
-          print("checkFiducialVolume(sTree,key,dy) is False"+" ......... skip") 
-          continue
-       fitStatus   = atrack.getFitStatus()
-       nmeas = fitStatus.getNdf()
-       if not fitStatus.isFitConverged() : 
-          print("fitStatus.isFitConverged() is False"+" ......... skip")
-          continue
-       if nmeas < measCut:
-          print(f"Number of point stored in The Track in ShipDigiReco: {atrack.getNumPointsWithMeasurement()}")
-          print("nmeas (ndof) = %d"%nmeas+" < measCut (selected by user)= %d"%measCut+" ......... skip")
-          continue
-       fittedTracks[key] = atrack
-  #   needs different study why fit has not converged, continue with fitted tracks
-       rchi2 = fitStatus.getChi2()
-      #prob = ROOT.TMath.Prob(rchi2,int(nmeas))
-       chi2 = rchi2/nmeas
-       fittedState = atrack.getFittedState()
-       P = fittedState.getMomMag()
-       Px,Py,Pz = fittedState.getMom().x(),fittedState.getMom().y(),fittedState.getMom().z()
-       Rx,Ry,Rz = fittedState.getPos().x(),fittedState.getPos().y(),fittedState.getPos().z()
-       cov = fittedState.get6DCov()
-       # massi: this the fittedtrack-to-MCTrack association:
-       if len(sTree.fitTrack2MC)-1<key: # massi: what is this for ? check.
-          print("len(sTree.fitTrack2MC)-1 = %d"%(len(sTree.fitTrack2MC)-1)+" < key = %d"%key+" ......... skip")
-          continue
-       mcPartKey = sTree.fitTrack2MC[key]
-       mcPart    = sTree.MCTrack[mcPartKey]
-       if not mcPart :
-          print("no mcPart found"+" ......... skip")
-          continue
-       Ptruth_start   = mcPart.GetP()
-       Ptruthz_start  = mcPart.GetPz()
-       Wa = mcPart.GetWeight()
-       Ptruth,Ptruthx,Ptruthy,Ptruthz = getPtruthFirst(sTree,mcPartKey) # get p truth from first strawpoint
-       delPOverP = (Ptruth - P)/Ptruth
-       delPOverPz = (1./Ptruthz - 1./Pz) * Ptruthz
-       # ... end fittedtrack-to-MCTrack association
-       if chi2>chi2CutOff:
-          print("chi2 = %d"%chi2+" > chi2CutOff = %d"%chi2CutOff+" ......... skip")
-          continue
-  #   try measure impact parameter
-  #    trackDir = fittedState.getDir()
-  #    trackPos = fittedState.getPos()
-  #    vx = ROOT.TVector3()
-  #    mcPart.GetStartVertex(vx)
-  #    t = 0
-  #    for i in range(3):   t += trackDir(i)*(vx(i)-trackPos(i))
-  #    dist = 0
-  #    for i in range(3):   dist += (vx(i)-trackPos(i)-t*trackDir(i))**2
-  #    dist = ROOT.TMath.Sqrt(dist)
-  #   ---
-       _rc,_pos,_mom = TrackExtrapolateTool.extrapolateToPlane(atrack,Zubt) # ShipGeo.UBT.z)
-  #    compare to straight extrapolation from anchor point Rx,Ry,Rz and direction Px,Py,Pz 
-       Xubt = Rx + (Zubt-Rz)*Px/Pz
-       Yubt = Ry + (Zubt-Rz)*Py/Pz
-      #print("Start from Fitted State Pos/Mom: %9.6f"%Rx+" %9.6f"%Ry+" %9.6f"%Rz+" / %9.6f"%Px+" %9.6f"%Py+" %9.6f"%Pz)
-      #print("  Compare straight vs tool extrapolation at Z = %6.2f"%Zubt+" cm")
-      #print("    straight X,Y: %9.6f"%Xubt     +" %9.6f"%Yubt     )
-      #print("        tool X,Y: %9.6f"%_pos.x() +" %9.6f"%_pos.y() )
-       h['Y vs X straight'].Fill(Xubt,Yubt, Wa)
-       h['Y vs X tool'].Fill(_pos.x(),_pos.y(), Wa)
-       h['Weight'].Fill(Wa)
-       distanza = ROOT.TMath.Sqrt( (_pos.x()-Xubt)**2 + (_pos.y()-Yubt)**2 ) 
-       h['dist straight vs tool'].Fill(distanza)
-  #   ----------add combinatorial loop, massi:
-       atrack_pos = ROOT.TVector3(atrack.getFittedState().getPos()) # no B taken into account !
-       atrack_dir = ROOT.TVector3(atrack.getFittedState().getDir()) # no B taken into account !
-       # the just above is the state at T1 entrance ? Not right! there is B field before T1!! 
-       # => Get it just upstream T1, where no field:
-       arc,aPos,aMom = TrackExtrapolateTool.extrapolateToPlane(atrack,Znofield)
-       atr_pos = ROOT.TVector3(aPos)
-       atr_dir = ROOT.TVector3(aMom.x()/aMom.Mag(),aMom.y()/aMom.Mag(),aMom.z()/aMom.Mag())
-       #print("    m  mykey mynmeas (  Px  ,  Py  ,  Pz  ) ")
-       for m in Significant_Events: # for m in range(n+1,sTree.GetEntries()):
-           if m <= n : continue
-           myrc = myTree.GetEntry(m)
-           mykey = -1
-           myfittedTracks = {}
-           try:
-            for btrack in myTree.FitTracks:
-                  mykey+=1
-                  myfitStatus   = btrack.getFitStatus()
-                  mynmeas = myfitStatus.getNdf()
-                  if not myfitStatus.isFitConverged() : continue
-                  if mynmeas < measCut: continue
-                  myfittedTracks[mykey] = btrack
-                  mymcPartKey = myTree.fitTrack2MC[key]
-                  mymcPart    = myTree.MCTrack[mymcPartKey]
-                  if not mymcPart :
-                     print("no mcPart found"+" ......... skip")
-                     continue
-                  Wb = mymcPart.GetWeight()
-                  myfittedState = btrack.getFittedState()
-                  myP = myfittedState.getMomMag()
-                  myPx,myPy,myPz = myfittedState.getMom().x(),myfittedState.getMom().y(),myfittedState.getMom().z()
-                  btrack_pos = ROOT.TVector3(myfittedState.getPos()) # no B taken into account !
-                  btrack_dir = ROOT.TVector3(myfittedState.getDir()) # no B taken into account !
-                  # the just above is the state at T1 entrance ? Not right! there is B field before T1!! 
-                  # => Get it just upstream T1, where no field:
-                  brc,bPos,bMom = TrackExtrapolateTool.extrapolateToPlane(btrack,Znofield)
-                  btr_pos = ROOT.TVector3(bPos)
-                  btr_dir = ROOT.TVector3(bMom.x()/bMom.Mag(),bMom.y()/bMom.Mag(),bMom.z()/bMom.Mag())
-                  myxv, myyv, myzv, mydoca = MyVertex( atrack_pos , atrack_dir , btrack_pos , btrack_dir ) # no B taken into account !
-                  abxv, abyv, abzv, abdoca = MyVertex( atr_pos , atr_dir , btr_pos , btr_dir )       
-                  h['CombVtxZWithB'].Fill(abzv/100.0,abxv/100.0)
-                  h['WeightedComb'].Fill(abzv/100,abxv/100,Wa*Wb)
-                  if abzv > Znofield: # not correct linear extrapolation ! vertex must be re-done !
-                     abdoca = 100000.0 # large number, sent to overflow bin
-                  if Debug and m-n<3: 
-                     print(" "+str(m)+"  "+str(mykey)+" "+str(mynmeas)+" %6.2f"%myPx+" %6.2f"%myPy+" %6.2f"%myPz)
-                     print("With tracks extrapolated not taking B into account:")
-                     print(" atrack Pos/Dir: %9.6f"%atrack_pos[0]+" %9.6f"%atrack_pos[1]+" %9.6f"%atrack_pos[2]\
-                                          +" %9.6f"%atrack_dir[0]+" %9.6f"%atrack_dir[1]+" %9.6f"%atrack_dir[2])
-                     print(" btrack Pos/Dir: %9.6f"%btrack_pos[0]+" %9.6f"%btrack_pos[1]+" %9.6f"%btrack_pos[2]\
-                                          +" %9.6f"%btrack_dir[0]+" %9.6f"%btrack_dir[1]+" %9.6f"%btrack_dir[2])
-                     print("vtx,vty,vtz,doca: %9.6f"%myxv+" %9.6f"%myyv+" %9.6f"%myzv+" %9.6f"%mydoca)
-                     print("With tracks extrapolated with B taken into account:")
-                     print("    atr Pos/Dir: %9.6f"%atr_pos[0]+" %9.6f"%atr_pos[1]+" %9.6f"%atr_pos[2]\
-                                          +" %9.6f"%atr_dir[0]+" %9.6f"%atr_dir[1]+" %9.6f"%atr_dir[2])
-                     print("    btr Pos/Dir: %9.6f"%btr_pos[0]+" %9.6f"%btr_pos[1]+" %9.6f"%btr_pos[2]\
-                                          +" %9.6f"%btr_dir[0]+" %9.6f"%btr_dir[1]+" %9.6f"%btr_dir[2])
-                     print("vtx,vty,vtz,doca: %9.6f"%abxv+" %9.6f"%abyv+" %9.6f"%abzv+" %9.6f"%abdoca)
-                  h['CombDocaNoB'].Fill(mydoca)
-                  h['CombDocaWithB'].Fill(abdoca)
-                  h['CombDocaWithVsNoB'].Fill(mydoca,abdoca)
-           except Exception as e:
-            print(f"Exception in inner loop: {e}")
+    atrack_pos = Significant_data[n]["track_positions"]['fitted_pos'][0]
+    atrack_dir = Significant_data[n]["track_positions"]['fitted_dir'][0]
+
+    if atrack_dir == None or atrack_pos == None:
+        # print("fitted points are corrupted. Abort at ",n)
+        error = "fitted points are corrupted."
+        ut.reportError(error)
+        return False
+
+
+    atr_pos =  Significant_data[n]["track_positions"]['extrapolated_pos'][0] 
+    atr_dir =  Significant_data[n]["track_positions"]['extrapolated_dir'][0]
+
+    if atr_pos == None or atr_dir == None:
+        # print("Extrapolated points are corrupted. Abort at", n)
+        error = "fitted points are corrupted."
+        ut.reportError(error)
+        return False
+    
+    for m in Significant_data: # for m in range(n+1,sTree.GetEntries()):
+        if m <= n : continue
+        ar["m"].append(m)
+        Fails_status = False
+
+        if Significant_data[m]['strawtubesPoints']['pid'] == Significant_data[n]['strawtubesPoints']['pid']:
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            error = "same pdg code"
+            ut.reportError(error)
             continue
+
+        W_comb = Significant_data[m]['OutputInfo']['W'][0] * Significant_data[n]['OutputInfo']['W'][0]
+
+        # Track Fit Point in the first Straw Tubes it met ( like this -> no B taken into account !)
+        btrack_pos = Significant_data[m]["track_positions"]['fitted_pos'][0]
+        btrack_dir = Significant_data[m]["track_positions"]['fitted_dir'][0] 
+
+        if btrack_dir == None or btrack_pos == None:
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            # print("fitted points are corrupted. Abort at ",m)
+            error = "fitted points are corrupted."
+            ut.reportError(error)
+            continue
+        # Extrapolated Track Point in the first point without B field
+        btr_pos =  Significant_data[m]["track_positions"]['extrapolated_pos'][0]
+        btr_dir =  Significant_data[m]["track_positions"]['extrapolated_dir'][0]
+
+        if btr_pos == None or btr_dir == None:
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            # print("Extrapolated points are corrupted. Abort at ",m)
+            error = "fitted points are corrupted."
+            ut.reportError(error)
+            continue
+
+        # Doca of tracks in the two cases
+
+        # 1) no B taken into account
+        myxv, myyv, myzv, mydoca = DOCAfromP( atrack_pos , atrack_dir , btrack_pos , btrack_dir )
+
+        # 2) B taken into account
+        abxv, abyv, abzv, abdoca = DOCAfromP( atr_pos , atr_dir , btr_pos , btr_dir )
+
+        if not abdoca or not abzv:
+            # print("The abdoca: ", abdoca) 
+            # print("The abzv: ", abzv) 
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            error = "Doca not correctly evaluated."
+            ut.reportError(error)
+            continue
+
+        if abdoca > np.sqrt(400**2 + 600**2) or mydoca > np.sqrt(400**2 + 600**2):
+            # print("DOCA no sense big (no B)", abdoca)
+            # print("DOCA no sense big (B)", mydoca)
+            error = "Doca bigger than the Straws."
+            ut.reportError(error)
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            continue
+        
+        if not CheckVertexInFiducialVolume(abxv, abyv, abzv):
+        #    print("Outside the fiducial volume, the position is:", abzv)
+           Fails_status = True
+           ar["Fail_status"].append(Fails_status)
+           error = "Outside the fiducial volume"
+           ut.reportError(error)
+           continue
+
+        if abdoca > 2:
+        #    print("Discarded for doca otuside 2 cm")
+           Fails_status = True
+           ar["Fail_status"].append(Fails_status)
+           error = "Discarded for doca > 2 cm"
+           ut.reportError(error)
+           continue
+
+        if abzv > Znofield: # not correct linear extrapolation ! vertex must be re-done !
+            #print("abzv > Znofield")
+            # print("Event ",m)
+            # print("x,y,z:",Significant_data[m]["track_positions"]['extrapolated_pos'])
+            # print("px,py,pz:",Significant_data[m]["track_positions"]['extrapolated_dir'])
+            # print("Event ",n)
+            # print("x,y,z:",Significant_data[n]["track_positions"]['extrapolated_pos'])
+            # print("px,py,pz:",Significant_data[n]["track_positions"]['extrapolated_dir'])
+            error = "abzv > Znofield"
+            ut.reportError(error)
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            continue
+            # print(abzv)
+            # print(myzv)
+
+        # Take the first momentum in SST and conver into TVector3
+        mom_n, mom_m = (ROOT.TVector3(*Significant_data[i]['strawtubesPoints']['mom'][0]) for i in (n, m))
+        # The resultant direction vector of the vertex
+        res_vec = (atr_dir * mom_n.Mag() + btr_dir * mom_m.Mag()).Unit()
+
+        # Check if in target location the backtracked coordinates of the vertex are inside a radius of 2.5 m
+        if backtrack_radius_to_z0(abxv, abyv, abzv, res_vec) > 2.5 * 100:
+            error = "r(z=0) > 2.5 m"
+            ut.reportError(error)
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            continue          
+        
+        mass1 = mass2 = 0.105  # muon mass [GeV]
+        Inv_mass = reconstruct_parent_mass(mass1, mom_n, mass2, mom_m)
+
+        if Inv_mass < (mass1+mass2):
+            error = "m_inv > 2*m_mu"
+            ut.reportError(error)
+            Fails_status = True
+            ar["Fail_status"].append(Fails_status)
+            continue  
+
+        ar["Fail_status"].append(Fails_status)
+        ar["doca_B"].append([abxv, abyv, abzv, abdoca])
+        ar["doca_noB"].append([myxv, myyv, myzv, mydoca])
+        ar["W"].append(W_comb)
+        ar["Inv_mass"].append(Inv_mass)
+        h['CombVtxZWithB'].Fill(abzv/100.0,abxv/100.0)
+        h['WeightedComb'].Fill(abzv/100,abxv/100,W_comb)
+        h['CombDocaNoB'].Fill(mydoca)
+        h['CombDocaWithB'].Fill(abdoca)
+        h['CombDocaWithVsNoB'].Fill(mydoca,abdoca)
+    ut.errorSummary()
+    print(f"The number of failures for the event {n} are: {sum(ar['Fail_status'])} over {len(ar['Fail_status'])}")
 ###################################################################
 
 if showB: # show some B field profile
@@ -470,9 +715,10 @@ if showB: # show some B field profile
    showBfield(zstart,zend,nsteps=2000)
    plt.show(block=False)
 #
-sTree.GetEvent(0)
-nEvents = min(sTree.GetEntries(),options.nEvents)
-print("Will process %i"%nEvents+" events")
+if 0:
+    sTree.GetEvent(0)
+    nEvents = min(sTree.GetEntries(),options.nEvents)
+    print("Will process %i"%nEvents+" events")
 t1 = time()
 print("Initialization time: ", t1-t0)
 
@@ -487,213 +733,243 @@ Reconstructed_tracks_not_valids_Fit_tracks = 0
 Reconstructed_tracks_not_valids_Outsdie_decay_vessel = 0
 Reconstructed_tracks_not_valids_FitStatus_not_converged = 0
 Reconstructed_tracks_not_valids_nmeas_under_25 = 0
-
+Reconstructed_tracks_not_valids_no_MCtrack = 0
+Reconstructed_tracks_not_valids_momenta = 0
+Reconstructed_tracks_not_valids_copy = 0
+Reconstructed_tracks_not_valids_pdg = 0
 # Store important event identifiers if needed
 Significant_Events = []
+Significant_data = {}
 
 # for debug
 data = {}
+nmeas_values = []
+trackpoints_values = []
 
-#Fist Loop to remove invalid tracks
-for n in range(nEvents):
-    rc = sTree.GetEntry(n)
-    # Check if the event has FitTracks (e.g., FitTracks_PR or FitTracks)
-    fit_tracks = None
-    measCut = measCutFK
+# Step 1: Global dictionary to store track positions
+track_positions = {}
 
-    if sTree.GetBranch("FitTracks_PR") and len(sTree.FitTracks_PR) > 0:
-      sTree.FitTracks = sTree.FitTracks_PR
-      measCut = measCutPR
-      fit_tracks = sTree.FitTracks
-    elif sTree.GetBranch("FitTracks") and len(sTree.FitTracks) > 0:
-      fit_tracks = sTree.FitTracks
+if 0:
+    #Fist Loop to remove invalid tracks
+    for n in range(nEvents):
+        rc = sTree.GetEntry(n)
+        # Check if the event has FitTracks (e.g., FitTracks_PR or FitTracks)
+        fit_tracks = None
+        measCut = measCutFK
 
-    if fit_tracks is None:
-      skipped_events+=1
-      continue
-    else:
-      print("========= Pre-selected event %d"%n+" =========================")
-      if len(sTree.FitTracks)>1: 
-         print(f"len(sTree.FitTracks) = {len(sTree.FitTracks)}"+" ......... skip")
-         Reconstructed_tracks_not_valids_Fit_tracks+=1
-         continue
-      if not checkFiducialVolume(sTree,0,dy): 
-         print("checkFiducialVolume(sTree,key,dy) is False"+" ......... skip")
-         Reconstructed_tracks_not_valids_Outsdie_decay_vessel+=1 
-         continue
-      fitStatus   = sTree.FitTracks[0].getFitStatus()
-      if not fitStatus.isFitConverged() : 
-         print("fitStatus.isFitConverged() is False"+" ......... skip")
-         Reconstructed_tracks_not_valids_FitStatus_not_converged+=1
-         continue
-      nmeas = fitStatus.getNdf()
+        if sTree.GetBranch("FitTracks_PR") and len(sTree.FitTracks_PR) > 0:
+            sTree.FitTracks = sTree.FitTracks_PR
+            measCut = measCutPR
+            fit_tracks = sTree.FitTracks
+        elif sTree.GetBranch("FitTracks") and len(sTree.FitTracks) > 0:
+            fit_tracks = sTree.FitTracks
 
-      rchi2 = fitStatus.getChi2()
-      #prob = ROOT.TMath.Prob(rchi2,int(nmeas))
-      chi2 = rchi2/nmeas
-      print("Chi2:",chi2)
-      if chi2>chi2CutOff:
-          print("chi2 = %d"%chi2+" > chi2CutOff = %d"%chi2CutOff+" ......... skip")
-          Reconstructed_tracks_not_valids_chi2 +=1
-          continue
+        if fit_tracks is None:
+            skipped_events+=1
+            continue
+
+        print("========= Pre-selected event %d"%n+" =========================")
+
+        if abs(sTree.MCTrack[sTree.fitTrack2MC[0]].GetPdgCode()) != 13:
+            print("The pdg code is wrong: ", sTree.MCTrack[sTree.fitTrack2MC[0]].GetPdgCode())
+            Reconstructed_tracks_not_valids_pdg +=1
+            continue
+        # FitTracks has to be 1
+        if len(sTree.FitTracks)>1: 
+            print(f"len(sTree.FitTracks) = {len(sTree.FitTracks)}"+" ......... skip")
+            Reconstructed_tracks_not_valids_Fit_tracks+=1
+            continue
+        
+        # Check Fiducial Volume
+        if not checkFiducialVolume(sTree,0,dy): 
+            print("checkFiducialVolume(sTree,key,dy) is False"+" ......... skip")
+            Reconstructed_tracks_not_valids_Outsdie_decay_vessel+=1 
+            continue
+
+        # Check if the fit has converged
+        atrack = sTree.FitTracks[0]
+        fitStatus   = atrack.getFitStatus()
+
+        if not fitStatus.isFitConverged() : 
+            print("fitStatus.isFitConverged() is False"+" ......... skip")
+            Reconstructed_tracks_not_valids_FitStatus_not_converged+=1
+            continue
+
+        # Check if the file is currupted
+        nmeas = fitStatus.getNdf()
+        if len(sTree.strawtubesPoint)<25 or sTree.fitTrack2MC[0] != sTree.strawtubesPoint[0].GetTrackID():
+            print("len(sTree.fitTrack2MC[0]):", len(sTree.fitTrack2MC))
+            print("mcPartKey:", sTree.fitTrack2MC[0])
+            print("p.GetTrackID():",p.GetTrackID())
+            print(f"len(sTree.FitTracks) = {len(sTree.FitTracks)}")
+            print("chi2 = %d"%fitStatus.getChi2())
+            print(f"The number of points in stratubesPoint: {len(sTree.strawtubesPoint)}")
+            print("Something is broken in the file (straw tubes point < 25).... skip")
+            Reconstructed_tracks_not_valids_copy+=1
+            continue
+
+        if nmeas < measCut:
+
+            # Check if the reason for the cut is the low number of stations_hit
+            stations_hit = set()  # Will collect unique station identifiers
+
+            for i in range(len(sTree.strawtubesPoint)):
+                p = sTree.strawtubesPoint[i]
+                stations_hit.add(int(p.GetDetectorID() // 10**6)) # first digit identify the tracking station
+
+            if len(stations_hit) < 4:
+                print(f"Rejecting track: only {len(stations_hit)} stations hit.")
+                Reconstructed_tracks_not_valids_less_4_tracking_stations +=1
+
+            if 1:
+                data[n] = extract_track_data(sTree,fitStatus.getChi2())
+                at = data[n].setdefault("ErrorInfo", {})
+                at.setdefault("nSST", [len(stations_hit)])
+                at.setdefault("ndof", [nmeas])
+                at.setdefault("TrackPoints", [atrack.getNumPointsWithMeasurement()])
+
+            print(f"Number of point stored in The Track in ShipDigiReco: {atrack.getNumPointsWithMeasurement()}")
+            print("nmeas (ndof) = %d"%nmeas+" < measCut (selected by user)= %d"%measCut+" ......... skip")
+            
+            Reconstructed_tracks_not_valids_nmeas_under_25+=1
+            continue
+        
+        rchi2 = fitStatus.getChi2()
+        #prob = ROOT.TMath.Prob(rchi2,int(nmeas))
+        chi2 = rchi2/nmeas
+        if chi2>chi2CutOff:
+            print("chi2 = %d"%chi2+" > chi2CutOff = %d"%chi2CutOff+" ......... skip")
+            Reconstructed_tracks_not_valids_chi2 +=1
+            continue
+        
 
 
-      if nmeas < measCut:
-         stations_hit = set()  # Will collect unique station identifiers
-         for i in range(len(sTree.strawtubesPoint)):
-            p = sTree.strawtubesPoint[i]
-            stations_hit.add(int(p.GetDetectorID() // 10**6)) # first digit identify the tracking station
-            print(f"{p.GetTrackID()} {p.GetX()} {p.GetY()} {p.GetZ()} {p.GetPx()} {p.GetPy()} {p.GetPz()} {p.GetTime()} {p.GetDetectorID()}")
-         if len(stations_hit) < 4:
-            print(f"Rejecting track: only {len(stations_hit)} stations hit.")
-            Reconstructed_tracks_not_valids_less_4_tracking_stations +=1
+        Ptruth,_,_,_ = getPtruthFirst(sTree,sTree.fitTrack2MC[0])
+        if Ptruth < 1:
+            print(f"P_truth={Ptruth} GeV/c")
+            print("P < 1 GeV/c"+" ......... skip")
+            Reconstructed_tracks_not_valids_momenta+=1
+            continue
 
-         if 0:
-            for track in sTree.FitTracks:
-               rep = track.getCardinalRep()
-               nPoints = track.getNumPoints()
-               print(f"\nTrack has {nPoints} TrackPoints")
+        print("========= selected event %d"%n+" =========================")
+        Significant_Events.append(n)
+        Significant_data[n] = extract_track_data(sTree, chi2, True)
 
-               for i in range(nPoints):
-                  tp = track.getPoint(i)
-                  if not tp:
-                        continue
+if data:
+    # Save to pickle
+    with open("Rejected_tracks.pkl", "wb") as f:
+        pickle.dump(data, f)
+else:
+    try:
+        with open("Rejected_tracks.pkl", "rb") as f:
+            data = pickle.load(f)
+    except:
+        print("no file")
+        assert False
 
-                  print(f"\nTrackPoint #{i}: Sorting parameter = {tp.getSortingParameter()}")
+# Extract ndof (nmeas) and TrackPoints from ErrorInfo
+nmeas_values, trackpoints_values = zip(*[
+    (d["ErrorInfo"]["ndof"][0], d["ErrorInfo"]["TrackPoints"][0])
+    for d in data.values()
+    if "ErrorInfo" in d and d["ErrorInfo"].get("ndof") and d["ErrorInfo"].get("TrackPoints")
+])
 
-                  # Raw measurement info
-                  meas = tp.getRawMeasurement()
-                  if meas:
-                        try:
-                           detId = meas.getDetId()
-                           hitId = meas.getHitId()
-                           coords = meas.getRawHitCoords()  # Usually a vector or array
-                           print(f"  RawMeasurement: detId={detId}, hitId={hitId}")
-                           print(f"  Raw hit coordinates: {list(coords)}")
-                        except Exception as e:
-                           print(f"  Could not get raw measurement coords: {e}")
-                  else:
-                        print("  No raw measurement.")
+# Plot 1D histograms
+fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+axs[0].hist(nmeas_values, bins=30, color='steelblue', edgecolor='black')
+axs[0].set(title='nmeas (ndof)', xlabel='nmeas', ylabel='Count')
 
-                  # Fitted state info
-                  fi = tp.getFitterInfo(rep)
-                  if fi:
-                        try:
-                           fittedState = fi.getFittedState()
-                           pos = fittedState.getPos()
-                           mom = fittedState.getMom()
-                           print(f"  Fitted Position: x={pos.X():.3f}, y={pos.Y():.3f}, z={pos.Z():.3f}")
-                           print(f"  Fitted Momentum: px={mom.X():.3f}, py={mom.Y():.3f}, pz={mom.Z():.3f}")
-                        except Exception as e:
-                           print(f"  Could not get fitted state: {e}")
-                  else:
-                        print("  No fitter info available.")
+axs[1].hist(trackpoints_values, bins=30, color='coral', edgecolor='black')
+axs[1].set(title='TrackPoints', xlabel='TrackPoints', ylabel='Count')
+
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(6, 5))
+plt.hist2d(nmeas_values, trackpoints_values, bins=10, cmap='Blues')
+plt.xlabel("nmeas")
+plt.ylabel("TrackPoints")
+plt.title("nmeas vs TrackPoints")
+plt.colorbar(label='Frequency')
+plt.show()
 
 
-
-               # Collect strawtubesPoint info grouped by TrackID
-               for i in range(len(sTree.strawtubesPoint)):
-                  p = sTree.strawtubesPoint[i]
-                  track_id = n#p.GetTrackID()
-
-                  entry = {
-                     "pos": (p.GetX(), p.GetY(), p.GetZ()),
-                     "mom": (p.GetPx(), p.GetPy(), p.GetPz()),
-                  }
-
-                  if track_id not in data:
-                     data[track_id] = {
-                           "strawtubesPoints": {
-                              "pos": [],
-                              "mom": [],
-                           },
-                           "fitTracks": {
-                              "rawMeasurement": [],
-                              "pos": [],
-                              "mom": [],
-                              "chi2": [],
-                           }
-                     }
-
-                  data[track_id]["strawtubesPoints"]["pos"].append(entry["pos"])
-                  data[track_id]["strawtubesPoints"]["mom"].append(entry["mom"])
-
-               # Collect FitTracks info (fitted points)
-               for track in sTree.FitTracks:
-                  rep = track.getCardinalRep()
-                  nPoints = track.getNumPoints()
-
-                  for i in range(nPoints):
-                     tp = track.getPoint(i)
-                     if not tp:
-                           continue
-
-                     # Raw measurement
-                     meas = tp.getRawMeasurement()
-                     if meas:
-                           try:
-                              coords = list(meas.getRawHitCoords())
-                              raw_measurement = coords
-                           except Exception:
-                              raw_measurement = None
-                     else:
-                           raw_measurement = None
-
-                     # Fitted position and momentum
-                     fi = tp.getFitterInfo(rep)
-                     if fi:
-                           try:
-                              fittedState = fi.getFittedState()
-                              pos = fittedState.getPos()
-                              mom = fittedState.getMom()
-                              pos_tuple = (pos.X(), pos.Y(), pos.Z())
-                              mom_tuple = (mom.X(), mom.Y(), mom.Z())
-                           except Exception:
-                              pos_tuple = None
-                              mom_tuple = None
-                     else:
-                           pos_tuple = None
-                           mom_tuple = None
-
-                     # Append to the data dictionary
-                     data[track_id]["fitTracks"]["rawMeasurement"].append(raw_measurement)
-                     data[track_id]["fitTracks"]["pos"].append(pos_tuple)
-                     data[track_id]["fitTracks"]["mom"].append(mom_tuple)
-                     data[track_id]["fitTracks"]['chi2'].append(chi2)
-
-               # Save to pickle
-               with open("track_data.pkl", "wb") as f:
-                  pickle.dump(data, f)
-
-         print(f"Number of point stored in The Track in ShipDigiReco: {sTree.FitTracks[0].getNumPointsWithMeasurement()}")
-         print("nmeas (ndof) = %d"%nmeas+" < measCut (selected by user)= %d"%measCut+" ......... skip")
-         Reconstructed_tracks_not_valids_nmeas_under_25+=1
-         continue
-
-    print("========= selected event %d"%n+" =========================")
-    Significant_Events.append(n)
 
 t2 = time()
 
-Reconstructed_tracks_not_valids = Reconstructed_tracks_not_valids_Fit_tracks + Reconstructed_tracks_not_valids_FitStatus_not_converged + Reconstructed_tracks_not_valids_chi2 + Reconstructed_tracks_not_valids_nmeas_under_25 + Reconstructed_tracks_not_valids_Outsdie_decay_vessel
-print("\n===== Track Reconstruction Summary =====")
+Reconstructed_tracks_not_valids = Reconstructed_tracks_not_valids_Fit_tracks + Reconstructed_tracks_not_valids_FitStatus_not_converged + Reconstructed_tracks_not_valids_chi2 + Reconstructed_tracks_not_valids_nmeas_under_25 + Reconstructed_tracks_not_valids_Outsdie_decay_vessel + Reconstructed_tracks_not_valids_no_MCtrack + Reconstructed_tracks_not_valids_momenta+Reconstructed_tracks_not_valids_copy + Reconstructed_tracks_not_valids_pdg
+print("\n===== Track Selection Process Summary =====")
 print("Time needed to select the events: ",t2-t1)
 print(f"Total Events analyzed: {event_number}")
 print(f"Skipped events: {skipped_events}")
+print(f"Total reconstructed tracks: {len(Significant_Events) + Reconstructed_tracks_not_valids }")
 print(f"Valid reconstructed tracks: {len(Significant_Events)}")
 print(f"Invalid reconstructed tracks: {Reconstructed_tracks_not_valids}")
+print(f" - Not valid pdg (!=13): {Reconstructed_tracks_not_valids_pdg}")
 print(f" - FitTracks missing: {Reconstructed_tracks_not_valids_Fit_tracks}")
 print(f" - Fit did not converge: {Reconstructed_tracks_not_valids_FitStatus_not_converged}")
 print(f" - Chi2/NDF too large: {Reconstructed_tracks_not_valids_chi2}")
 print(f" - N measurements < 25: {Reconstructed_tracks_not_valids_nmeas_under_25}")
 print(f" - N measurements < 25  and <4 tracking stations hit: {Reconstructed_tracks_not_valids_less_4_tracking_stations}")
 print(f" - Outside decay vessel: {Reconstructed_tracks_not_valids_Outsdie_decay_vessel}")
+print(f" - No valid MCtrack: {Reconstructed_tracks_not_valids_no_MCtrack}")
+print(f" - No valid Momenta: {Reconstructed_tracks_not_valids_momenta}")
+print(f" - Not valid copy?: {Reconstructed_tracks_not_valids_copy}")
 
-for n in Significant_Events:
-   myEventLoop(n)
-   sTree.FitTracks.Delete()
+
+if Significant_data and Reconstructed_tracks_not_valids_copy == 0:
+   # Save to pickle
+   with open("Selected_tracks.pkl", "wb") as f:
+      pickle.dump(Significant_data, f)
+
+if not Significant_data:
+    try:
+        with open("Selected_tracks.pkl", "rb") as f:
+            Significant_data = pickle.load(f)
+    except:
+        print("no file")
+        assert False
+
+for n in Significant_data:
+    print(f"\n===== Combinatorail Evaluation of Event {n} =====")
+    myEventLoop(n)
+    
+   #sTree.FitTracks.Delete()
 t3 = time()
+
+print("\n===== Track Reconstruction Summary =====")
+print("Time needed to select the events: ",t2-t1)
 print("time for myEventLoop: ",t3-t2)
+print(f"Valid reconstructed tracks: {len(Significant_data)}")
+
+total_failures = sum(
+    sum(ar.get("Fail_status", []))
+    for d in Significant_data.values()
+    if (ar := d.get("Analysis_results")) and isinstance(ar.get("Fail_status"), list)
+)
+
+total_entries = sum(
+    len(ar.get("Fail_status", []))
+    for d in Significant_data.values()
+    if (ar := d.get("Analysis_results")) and isinstance(ar.get("Fail_status"), list)
+)
+
+total_bkg_rate_vertices = sum(
+    sum(ar.get("W", []))
+    for d in Significant_data.values()
+    if (ar := d.get("Analysis_results")) and isinstance(ar.get("W"), list)
+)
+
+print(f"Total number of failures: {total_failures} over {total_entries}")
+print(f"Total number of valid combinatorial vertices : {total_entries - total_failures}")
+print(f"Total Combinatorial Vertex Background : {total_bkg_rate_vertices} Hz")
+
+
+# if Significant_data:
+#    # Save to pickle
+#    with open("Selected_tracks.pkl", "wb") as f:
+#       pickle.dump(Significant_data, f)
+
 if doPlots: 
    makePlots()  
 
@@ -706,8 +982,9 @@ if "/eos" in hfile or not options.inputFile.find(',')<0:
 ROOT.gROOT.cd()
 ut.writeHists(h,hfile)
 
-print("Total Events:", len(Significant_Events))
-print("Skipped Events", len(skipped_events))
+
+
+
 
 # 0_400000_9600001
 # 39_400000_1/

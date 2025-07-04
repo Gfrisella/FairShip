@@ -181,5 +181,5 @@ for subdir, _, files in os.walk(maindir):
         # mem_monitor()
         # end loop over events
         SHiP.finish()
-        if options.OneFile: break
+        if options.OneFile: temp = 1
 

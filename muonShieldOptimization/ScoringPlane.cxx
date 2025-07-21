@@ -262,14 +262,14 @@ void ScoringPlane::ConstructGeometry()
    TString shapename_prefix(myname); // Use a prefix for shapenames
 
    if (fShapeType == "Box") {
-       sensPlane = gGeoManager->MakeBox(shapename_prefix+"_box", vac, fLx, fLy, fLz);
+       sensPlane = gGeoManager->MakeBox(shapename_prefix, vac, fLx, fLy, fLz);
        cout << this->GetName() << ", ConstructGeometry(): Created Box with Lx=" << fLx << ", Ly=" << fLy << ", Lz=" << fLz << endl;
    } else if (fShapeType == "Arb8") { // Handle Arb8 shape
-       sensPlane = gGeoManager->MakeArb8(shapename_prefix+"_arb8", vac, fD_Z_Arb8, fArb8Corners.data());
+       sensPlane = gGeoManager->MakeArb8(shapename_prefix, vac, fD_Z_Arb8, fArb8Corners.data());
        cout << this->GetName() << ", ConstructGeometry(): Created Arb8 with dz=" << fD_Z_Arb8 << " and custom corners." << endl;
    } else {
        std::cerr << this->GetName() << ", ConstructGeometry(): ERROR - Unknown shape type '" << fShapeType << "'. Using default Box." << std::endl;
-       sensPlane = gGeoManager->MakeBox(shapename_prefix+"_err", vac, fLx, fLy, fLz); // Fallback to Box
+       sensPlane = gGeoManager->MakeBox(shapename_prefix, vac, fLx, fLy, fLz); // Fallback to Box
    }
 
    if (fMediumName.EqualTo("vacuums")) {

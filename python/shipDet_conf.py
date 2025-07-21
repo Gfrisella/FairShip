@@ -456,48 +456,29 @@ def configure(run, ship_geo):
         ScoPlane_ypos  = [ 0., 0., 0] # cm
         ScoPlane_zpos  = [- 40 * u.m, 83.95 * u.m , 32.7 * u.m]
         ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
-        ScoPlane_HalfX = [50., 225., 400] # cm
-        ScoPlane_HalfY = [50., 325., 300] # cm
+        ScoPlane_HalfX = [50., 250., 400] # cm
+        ScoPlane_HalfY = [50., 330., 300] # cm
         ScoPlane_len = [0.1, 0.1, 0.1]
         ScoPlane_medium = ["vacuums"] * len(ScoPlane_Add)
         ScoPlane_shape = ["Box"] * len(ScoPlane_Add)
-
-    for iz in range(0,len(ScoPlane_zpos)):
-        if ScoPlane_Add[iz]:
-            scoringplane = addScoringPlane(anindex=iz,\
-                                   xpos = ScoPlane_xpos[iz],ypos = ScoPlane_ypos[iz],zpos = ScoPlane_zpos[iz],\
-                                   xhalfw = ScoPlane_HalfX[iz],yhalfh = ScoPlane_HalfY[iz],  
-                                   lz = ScoPlane_len[iz],
-                                   medium_name = ScoPlane_medium[iz],
-                                   shape_type = ScoPlane_shape[iz],
-                                #    dx1 = ScoPlane_dx1[iz],              # Half-width X at -Z (50 cm for 1m total)
-                                #    dx2 = ScoPlane_dx2[iz],             # Half-width X at +Z (150 cm for 3m total)
-                                #    dy1 = ScoPlane_dy1[iz],              # Half-width Y at -Z (0.05 cm for 1mm total)
-                                #    dy2 = ScoPlane_dy2[iz],               # Half-width Y at +Z (0.05 cm for 1mm total)
-                                #    alpha = ScoPlane_alpha[iz],
-                                #    beta = ScoPlane_beta[iz],
-                                #    gamma = ScoPlane_gamma[iz]
-                                   )
-            detectorList.append(scoringplane)
-        else:
-            print("... ScoringPlane"+str(iz)+" is not to be defined")
+        ScoPlane_arb8_dz = [0] * len(ScoPlane_Add)  # NEW: Half-length in Z for Arb8
 
     ## DECAY VESSEL
 
     if DECAY_VESSEl:
-        balloon_thickness = 0.13  # cm
-        ScoPlane_xpos  = [ 0.]*7 # cm
-        ScoPlane_ypos  = [ 0.]*7 # cm
-        ScoPlane_zpos  = [32.7 * u.m , 83 * u.m] + [57.85 * u.m]* 5 
-        ScoPlane_Add   = [1]*7 # Add this Scoring Plane (1 or 0)
-        ScoPlane_HalfX = [455.9, 455.9] + [0]* 5 # cm
-        ScoPlane_HalfY = [336., 336.] + [0]* 5  # cm
-        ScoPlane_arb8_dz = [0] * 2 + [5030/2 - 0.02] * 4 + [5030/2 - balloon_thickness]
-        ScoPlane_len = [0.1]* 2 + [5030/2 - 0.2]* 5
-        ScoPlane_medium =  ["PVC"] * 6 + ["helium"]
-        ScoPlane_shape = ["Box"] * 2 + ["Arb8"] * 5
+        balloon_thickness = 0.14  # cm
+        ScoPlane_xpos.extend([0.] * 7)  # cm
+        ScoPlane_ypos.extend([0.] * 7)  # cm
+        ScoPlane_zpos.extend([32.7 * u.m, 83 * u.m] + [57.85 * u.m] * 5)
+        ScoPlane_Add.extend([1] * 7)
+        ScoPlane_HalfX.extend([455.9, 455.9] + [0] * 5)
+        ScoPlane_HalfY.extend([336., 336.] + [0] * 5)
+        ScoPlane_arb8_dz.extend([0] * 2 + [5030/2 - balloon_thickness*2 - 1e-3] * 5)
+        ScoPlane_len.extend([balloon_thickness] * 2 + [5030/2 - balloon_thickness*2 - 1e-3] * 5)
+        ScoPlane_medium.extend(["PVC"] * 6 + ["helium"])
+        ScoPlane_shape.extend(["Box"] * 2 + ["Arb8"] * 5)
 
-        
+        balloon_thickness +=0.01  # cm, to avoid overlap with the muon shield
         Helium_balloon = [
             -0.5*1e2 + balloon_thickness, -1.35*1e2 + balloon_thickness,   # corner 1
             -0.5*1e2 + balloon_thickness,  1.35*1e2 - balloon_thickness,   # corner 4
@@ -509,9 +490,9 @@ def configure(run, ship_geo):
             2*1e2 - balloon_thickness,  -3*1e2 + balloon_thickness        # corner 2
         ]
 
-        balloon_thickness = 0.12  # cm
+        balloon_thickness = 0.14  # cm
 
-        faces = faces = [
+        faces = [
             # 3. Right face
             [
                 0.5*1e2 - balloon_thickness, -1.35*1e2,
@@ -563,55 +544,71 @@ def configure(run, ship_geo):
 
         faces.append(Helium_balloon)
 
-        for iz in range(0,len(ScoPlane_zpos)):
-            if ScoPlane_Add[iz]:
-                scoringplane = addScoringPlane(anindex=iz,\
-                                    xpos = ScoPlane_xpos[iz],ypos = ScoPlane_ypos[iz],zpos = ScoPlane_zpos[iz],\
-                                    xhalfw = ScoPlane_HalfX[iz],yhalfh = ScoPlane_HalfY[iz],  
-                                    lz = ScoPlane_len[iz],
-                                    medium_name = ScoPlane_medium[iz],
-                                    shape_type = ScoPlane_shape[iz],
-                                    arb8_dz = ScoPlane_arb8_dz[iz],      # NEW: Half-length in Z for Arb8
-                                    arb8_corners = None if ScoPlane_arb8_dz[iz] == 0 else faces[iz-2]
-                                    )
-                detectorList.append(scoringplane)
+       
+    # if SND_ver:
+    #     zEndOfPassiveShield = ship_geo.muShield.z 
+    #     dZ = [None] * 7
+    #     Z = [None] * 7
+    #     zgap = 10.
+    #     dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
+    #     Z[0] = zEndOfPassiveShield + dZ[0] + 0.2
+
+    #     dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
+    #     Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap
+
+    #     dZ[2] = ship_geo.muShield.dZ3 - zgap / 2
+    #     Z[2] = Z[1] + dZ[1] + dZ[2] + zgap
+
+    #     dZ[3] = ship_geo.muShield.dZ4 - zgap / 2
+    #     Z[3] = Z[2] + dZ[2] + dZ[3] + zgap
+
+    #     dZ[4] = ship_geo.muShield.dZ5 - zgap / 2
+    #     Z[4] = Z[3] + dZ[3] + dZ[4] + zgap
+
+    #     dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
+    #     Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
+
+    #     dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
+    #     Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
+    #     for i in range(4, len(Z)):
+    #             zParts = int(np.ceil(2.0 * dZ[i] / 50))
+    #             zetino = list(np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], zParts + 1))  # ✅ fix
+    #             for zetix in zetino:  
+    #                 ScoPlane_xpos.append(0)
+    #                 ScoPlane_ypos.append(0)
+    #                 ScoPlane_zpos.append(zetix)
+    #                 ScoPlane_Add.append(1)
+    #                 ScoPlane_HalfY.append(200 if zetix > -4160 else 120)
+    #                 ScoPlane_HalfX.append(200)
+    
+    jj = 0
+    print("Adding scoring planes:"
+          f" {len(ScoPlane_xpos)} planes defined")
+    for iz in range(len(ScoPlane_zpos)):
+        if ScoPlane_Add[iz]:
+            # Prepare arb8_corners depending on whether dz is zero
+            if ScoPlane_arb8_dz[iz] == 0:
+                arb8_corners = None
             else:
-                print("... ScoringPlane"+str(iz)+" is not to be defined")
-    elif SND_ver:
-        zEndOfPassiveShield = ship_geo.muShield.z 
-        dZ = [None] * 7
-        Z = [None] * 7
-        zgap = 10.
-        dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
-        Z[0] = zEndOfPassiveShield + dZ[0] + 0.2
+                arb8_corners = faces[jj]
+                jj += 1
 
-        dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
-        Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap
-
-        dZ[2] = ship_geo.muShield.dZ3 - zgap / 2
-        Z[2] = Z[1] + dZ[1] + dZ[2] + zgap
-
-        dZ[3] = ship_geo.muShield.dZ4 - zgap / 2
-        Z[3] = Z[2] + dZ[2] + dZ[3] + zgap
-
-        dZ[4] = ship_geo.muShield.dZ5 - zgap / 2
-        Z[4] = Z[3] + dZ[3] + dZ[4] + zgap
-
-        dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
-        Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
-
-        dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
-        Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
-        for i in range(4, len(Z)):
-                zParts = int(np.ceil(2.0 * dZ[i] / 50))
-                zetino = list(np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], zParts + 1))  # ✅ fix
-                for zetix in zetino:  
-                    ScoPlane_xpos.append(0)
-                    ScoPlane_ypos.append(0)
-                    ScoPlane_zpos.append(zetix)
-                    ScoPlane_Add.append(1)
-                    ScoPlane_HalfY.append(200 if zetix > -4160 else 120)
-                    ScoPlane_HalfX.append(200)
+            scoringplane = addScoringPlane(
+                anindex=iz,
+                xpos=ScoPlane_xpos[iz],
+                ypos=ScoPlane_ypos[iz],
+                zpos=ScoPlane_zpos[iz],
+                xhalfw=ScoPlane_HalfX[iz],
+                yhalfh=ScoPlane_HalfY[iz],
+                lz=ScoPlane_len[iz],
+                medium_name=ScoPlane_medium[iz],
+                shape_type=ScoPlane_shape[iz],
+                arb8_dz=ScoPlane_arb8_dz[iz],
+                arb8_corners=arb8_corners  # Now passed as a proper argument
+            )
+            detectorList.append(scoringplane)
+        else:
+            print(f"... ScoringPlane {iz} is not to be defined")
 
     if not hasattr(ship_geo, "magnetDesign"):
         # backward compatibility

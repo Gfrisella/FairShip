@@ -23,6 +23,9 @@ import shipunit as u
 import shipRoot_conf
 import shutil
 import time
+import gc
+
+
 
 
 shipRoot_conf.configure()
@@ -118,6 +121,7 @@ if withHists:
  ut.bookHist(h,'chi2','Chi2/DOF',100,0.,20.)
  ut.bookHist(h,'nGoodTracks','nGoodTracks',10,0.,10)
  ut.bookHist(h,'ntracks','ntracks',10,0.,10)
+ ut.bookHist(h,'nrec','nrec',10,0.,10)
 
 
 import shipDet_conf
@@ -154,10 +158,35 @@ global_variables.iEvent = 0
 # import reco tasks
 import shipDigiReco
 
+def findReconstructible(sTree,nhits=25,nstations=3):
+  hitspertrack = {} # hit counter per station and particle (trID)
+  nRecTracks = 0
+  for hit in sTree.strawtubesPoint:
+    trID = hit.GetTrackID()
+    if trID not in hitspertrack: hitspertrack[trID] = [0,0,0,0]
+    detID = hit.GetDetectorID()
+    # increment hit counter for this station and this particle (trID)
+    hitspertrack[trID][ int(detID//10**6) - 1] += 1  # operator "//" is a Floor Division
+    # check requirement for particle being "reconstructible" (customizable definition):
+  for trID in hitspertrack:
+    countstations = 0
+    counthits = 0
+    for st in [0,1,2,3]:
+        if hitspertrack[trID][st] > 0 :
+            countstations += 1
+            counthits += hitspertrack[trID][st]
+    # this is the requirement:
+    if countstations >= nstations and counthits >= nhits:
+        nRecTracks += 1
+        if global_variables.debug:
+          print(" event %i"%global_variables.iEvent+" reconstructible track PDG=",sTree.MCTrack[trID].GetPdgCode()," trID = ",trID,hitspertrack[trID])
+  return nRecTracks
+
 temp = 1
 for subdir, _, files in os.walk(maindir):
     if options.inputFile in files and options.geoFile in files:
         print("The directory analyzed is:",subdir)
+        if subdir.split('/')[-1] in ['30_400000_1200001','36_400000_3200001']: continue
         if subdir.split('/')[-1] == options.InitFile: temp = 0
         if temp and options.InitFile != '': continue
         origin = os.path.join(subdir, options.inputFile)
@@ -166,20 +195,29 @@ for subdir, _, files in os.walk(maindir):
         if os.path.exists(new):
             os.remove(new)
             print(f"Removed existing file: {new}")
+            time.sleep(2)
         os.system('cp '+ origin +' ' + new)
         time.sleep(2)  # sleeps for 10 seconds
+        while os.path.getsize(origin) != os.path.getsize(origin):
+           time.sleep(1)
+        print('here')
         SHiP = shipDigiReco.ShipDigiReco(new,fgeo)
-        options.nEvents   = min(SHiP.sTree.GetEntries(),options.nEvents)
+        numEvents   = min(SHiP.sTree.GetEntries(),options.nEvents)
         # main loop
-        for global_variables.iEvent in range(options.firstEvent, options.nEvents):
-            if global_variables.iEvent % 1000 == 0 or global_variables.debug:
-                print('event ', global_variables.iEvent)
+        for global_variables.iEvent in range(options.firstEvent, numEvents):
             rc = SHiP.sTree.GetEvent(global_variables.iEvent)
+            temp2 = findReconstructible(SHiP.sTree)
+            if temp2>0:
+              print('event ', global_variables.iEvent)
+              print(f' Number of event expected to be reconstructed: {temp2}')
             SHiP.digitize()
             SHiP.reconstruct()
         # memory monitoring
         # mem_monitor()
         # end loop over events
         SHiP.finish()
+        del SHiP
+        gc.collect()
         if options.OneFile: temp = 1
-
+        
+ut.writeHists(global_variables.h,"recohists.root")

@@ -165,7 +165,7 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
   }
   if (fPhiRandomize){phi = gRandom->Uniform(0.,2.) * TMath::Pi();}
   if (fsmearBeam > 0) {
-     Double_t r = fsmearBeam + 0.8 * gRandom->Gaus();
+     Double_t r = fsmearBeam + 1.6 * gRandom->Gaus();
      Double_t _phi = gRandom->Uniform(0., 2.) * TMath::Pi();
      dx = r * TMath::Cos(_phi);
      dy = r * TMath::Sin(_phi);

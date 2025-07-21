@@ -199,22 +199,54 @@ class ShipDigiReco:
 
 # for 'real' PatRec
   shipPatRec.initialize(fgeo)
+  
+ def findReconstructible(self,nhits=25,nstations=3):
+  hitspertrack = {} # hit counter per station and particle (trID)
+  nRecTracks = 0
+  for hit in self.sTree.strawtubesPoint:
+    trID = hit.GetTrackID()
+    if trID not in hitspertrack: hitspertrack[trID] = [0,0,0,0]
+    detID = hit.GetDetectorID()
+    # increment hit counter for this station and this particle (trID)
+    hitspertrack[trID][ int(detID//10**6) - 1] += 1  # operator "//" is a Floor Division
+    # check requirement for particle being "reconstructible" (customizable definition):
+  for trID in hitspertrack:
+    countstations = 0
+    counthits = 0
+    for st in [0,1,2,3]:
+        if hitspertrack[trID][st] > 0 :
+            countstations += 1
+            counthits += hitspertrack[trID][st]
+    # this is the requirement:
+    if countstations >= nstations and counthits >= nhits:
+        nRecTracks += 1
+        if global_variables.debug:
+          print(" event %i"%global_variables.iEvent+" reconstructible track PDG=",self.sTree.MCTrack[trID].GetPdgCode()," trID = ",trID,hitspertrack[trID])
+  return nRecTracks
+
+
 
  def reconstruct(self):
-   ntracks = self.findTracks()
-   global_variables.h['ntracks'].Fill(ntracks)
-   nGoodTracks = self.findGoodTracks()
-   global_variables.h['nGoodTracks'].Fill(nGoodTracks)
-   self.linkVetoOnTracks()
-   for x in self.caloTasks:
+  ntracks = self.findTracks()
+  nrec = self.findReconstructible()
+  global_variables.h['ntracks'].Fill(ntracks)
+  global_variables.h['nrec'].Fill(nrec)
+  nGoodTracks = self.findGoodTracks()
+  global_variables.h['nGoodTracks'].Fill(nGoodTracks)
+  # if nrec > 0:
+  #   print(f" The track that are reconstructible are (in Digi): {nrec}")
+  #   print(f" The track that are good reconstructed are (in Digi): {nGoodTracks}")
+  # if nGoodTracks> 0 and nrec == 0: print(f" The track that are good reconstructed are (in Digi) and zero reconstructible: {nGoodTracks}")
+  self.linkVetoOnTracks()
+  for x in self.caloTasks:
     if hasattr(x,'execute'): x.execute()
     elif x.GetName() == 'ecalFiller': x.Exec('start',self.sTree.EcalPointLite)
     elif x.GetName() == 'ecalMatch':  x.Exec('start',self.ecalReconstructed, self.sTree.MCTrack)
     else : x.Exec('start')
-   if len(self.caloTasks)>0:
+  if len(self.caloTasks)>0:
     self.EcalClusters.Fill()
     self.EcalReconstructed.Fill()
-   if global_variables.vertexing:
+  if global_variables.vertexing:
 # now go for 2-track combinations
     self.Vertexing.execute()
 
@@ -1001,7 +1033,10 @@ class ShipDigiReco:
       measurement.setMaxDistance(global_variables.ShipGeo.strawtubes.InnerStrawDiameter / 2.)
       # measurement.setLeftRightResolution(-1)
       tp.addRawMeasurement(measurement) # package measurement in the TrackPoint
-      theTrack.insertPoint(tp)  # add point to Track
+      try:
+        theTrack.insertPoint(tp)  # add point to Track
+      except:
+        print("not possible to insert the point")
       hitID += 1
     # print("debug meas", atrack, nM, stationCrossed[atrack], self.sTree.MCTrack[atrack], pdg)
     trackCandidates.append([theTrack,atrack])
@@ -1057,7 +1092,7 @@ class ShipDigiReco:
       if global_variables.debug:
         print(f"[TrackFit] Fit OK: chi2/ndf={chi2:.2f}, converged={fitStatus.isFitConverged()}")
     else:
-      error = "nmeas = 0"
+      error = "nmeas <= 0"
       ut.reportError(error)
       continue
 
@@ -1163,7 +1198,7 @@ class ShipDigiReco:
   print('finished writing tree')
   self.sTree.Write()
   ut.errorSummary()
-  ut.writeHists(global_variables.h,"recohists.root")
+  #ut.writeHists(global_variables.h,"recohists.root")
   if global_variables.realPR:
     shipPatRec.finalize()
   self.fn.Close()

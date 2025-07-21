@@ -51,16 +51,6 @@ input_path = os.path.join(options.directory, options.inputFile)
 geo_path = os.path.join(options.directory, options.geoFile)
 outFile = input_path.replace('.root', '_rec.root')
 
-if options.inputFile.find('_rec.root') >= 0:
-    options.inputFile = options.inputFile.replace('_rec.root', '.root')
-
-if os.path.exists(outFile):
-    os.remove(outFile)
-    print(f"Removed existing output file: {outFile}")
-
-os.system(f'cp {input_path} {outFile}')
-time.sleep(2)
-
 # Load geometry
 fgeo = ROOT.TFile.Open(geo_path)
 geoMat = ROOT.genfit.TGeoMaterialInterface()
@@ -80,6 +70,7 @@ if withHists:
     ut.bookHist(h, 'chi2', 'Chi2/DOF', 100, 0., 20.)
     ut.bookHist(h, 'nGoodTracks', 'nGoodTracks', 10, 0., 10)
     ut.bookHist(h, 'ntracks', 'ntracks', 10, 0., 10)
+    ut.bookHist(h,'nrec','nrec',10,0.,10)
 
 import shipDet_conf
 run = ROOT.FairRunSim()
@@ -115,11 +106,40 @@ import shipDigiReco
 SHiP = shipDigiReco.ShipDigiReco(outFile, fgeo)
 options.nEvents = min(SHiP.sTree.GetEntries(), options.nEvents)
 
+def findReconstructible(sTree,nhits=25,nstations=3):
+  hitspertrack = {} # hit counter per station and particle (trID)
+  nRecTracks = 0
+  for hit in sTree.strawtubesPoint:
+    trID = hit.GetTrackID()
+    if trID not in hitspertrack: hitspertrack[trID] = [0,0,0,0]
+    detID = hit.GetDetectorID()
+    # increment hit counter for this station and this particle (trID)
+    hitspertrack[trID][ int(detID//10**6) - 1] += 1  # operator "//" is a Floor Division
+    # check requirement for particle being "reconstructible" (customizable definition):
+  for trID in hitspertrack:
+    countstations = 0
+    counthits = 0
+    for st in [0,1,2,3]:
+        if hitspertrack[trID][st] > 0 :
+            countstations += 1
+            counthits += hitspertrack[trID][st]
+    # this is the requirement:
+    if countstations >= nstations and counthits >= nhits:
+        nRecTracks += 1
+        if global_variables.debug:
+          print(" event %i"%global_variables.iEvent+" reconstructible track PDG=",sTree.MCTrack[trID].GetPdgCode()," trID = ",trID,hitspertrack[trID])
+  return nRecTracks
+
 for global_variables.iEvent in range(options.firstEvent, options.nEvents):
     if global_variables.iEvent % 1000 == 0 or global_variables.debug:
         print('Event', global_variables.iEvent)
     rc = SHiP.sTree.GetEvent(global_variables.iEvent)
+    temp = findReconstructible(SHiP.sTree)
+    if temp>0:
+        print('event ', global_variables.iEvent)
+        print(f' Number of event expected to be reconstructed: {temp}')
     SHiP.digitize()
     SHiP.reconstruct()
 
 SHiP.finish()
+ut.writeHists(global_variables.h,"recohists.root")

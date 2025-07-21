@@ -246,7 +246,7 @@ parFile=f"{options.outputDir}/ship.params.{finaltag}.root"
 colnames  = ['sco0_Point','sco1_Point', 'sco2_Point'] # all sco*_Point
 scolnames = ['sco1_Point'] # the selected sco*_Point
 MuonHitsOnly = True
-sXcrit,sYcrit = [250.],[350.] # Xcrit, Ycrit of the selected sco planes
+sXcrit,sYcrit = [250.],[330.] # Xcrit, Ycrit of the selected sco planes
 # ncritlist = [1,2,3,4,5,6,7,8] #ncritlist = [3,4,5]
 direc = os.getcwd()
 Samplesize = 10*0

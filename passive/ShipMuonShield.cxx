@@ -175,6 +175,7 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
     Double_t finalCorners[zParts][16];
     Double_t dxdy[4][2];
     Double_t dZp = dZ/Double_t(zParts);
+    Double_t inter_space = 0.12;
 
     for (int i = 0; i < 4; ++i)
     {
@@ -211,10 +212,9 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
     }
 
     std::vector<TGeoVolume*> magF;
-
     for (int i = 0; i < zParts; ++i)
     {
-    magF.push_back(gGeoManager->MakeArb8(arbName + '_' + std::to_string(i), medium, dZp - 0.00001*m, finalCorners[i]));
+    magF.push_back(gGeoManager->MakeArb8(arbName + '_' + std::to_string(i), medium, dZp - inter_space, finalCorners[i]));
     magF[i]->SetLineColor(color);
     if (fWithConstShieldField) {
     magF[i]->SetField(magField);

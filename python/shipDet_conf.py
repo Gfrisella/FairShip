@@ -454,10 +454,10 @@ def configure(run, ship_geo):
         print("From shipDet_conf.py, configure(): add a few scoring planes for muon shield performance study")
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
-        ScoPlane_zpos  = [- 40 * u.m, 83.95 * u.m , 32.7 * u.m]
+        ScoPlane_zpos  = [ 4.5 * u.m, 83.95 * u.m , 32.7 * u.m]
         ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
-        ScoPlane_HalfX = [50., 250., 400] # cm
-        ScoPlane_HalfY = [50., 330., 300] # cm
+        ScoPlane_HalfX = [250., 250., 400] # cm
+        ScoPlane_HalfY = [150., 330., 300] # cm
         ScoPlane_len = [0.1, 0.1, 0.1]
         ScoPlane_medium = ["vacuums"] * len(ScoPlane_Add)
         ScoPlane_shape = ["Box"] * len(ScoPlane_Add)
@@ -545,42 +545,49 @@ def configure(run, ship_geo):
         faces.append(Helium_balloon)
 
        
-    # if SND_ver:
-    #     zEndOfPassiveShield = ship_geo.muShield.z 
-    #     dZ = [None] * 7
-    #     Z = [None] * 7
-    #     zgap = 10.
-    #     dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
-    #     Z[0] = zEndOfPassiveShield + dZ[0] + 0.2
+    if SND_ver:
+        zEndOfPassiveShield = ship_geo.muShield.z 
+        dZ = [None] * 7
+        Z = [None] * 7
+        zgap = 10.
 
-    #     dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
-    #     Z[1] = Z[0] + dZ[0] + dZ[1] + 2 * zgap
+        
+        dZ[0] = ship_geo.muShield.dZ1 - zgap / 2
+        Z[0] = zEndOfPassiveShield + dZ[0] + 0.2
 
-    #     dZ[2] = ship_geo.muShield.dZ3 - zgap / 2
-    #     Z[2] = Z[1] + dZ[1] + dZ[2] + zgap
+        dZ[1] = ship_geo.muShield.dZ2 - zgap / 2
+        Z[1] = Z[0] + dZ[0] + dZ[1] + zgap
 
-    #     dZ[3] = ship_geo.muShield.dZ4 - zgap / 2
-    #     Z[3] = Z[2] + dZ[2] + dZ[3] + zgap
+        dZ[2] = ship_geo.muShield.dZ3 - zgap / 2
+        Z[2] = Z[1] + dZ[1] + dZ[2] + 2 * zgap
 
-    #     dZ[4] = ship_geo.muShield.dZ5 - zgap / 2
-    #     Z[4] = Z[3] + dZ[3] + dZ[4] + zgap
+        dZ[3] = ship_geo.muShield.dZ4 - zgap / 2
+        Z[3] = Z[2] + dZ[2] + dZ[3] + zgap
 
-    #     dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
-    #     Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
+        dZ[4] = ship_geo.muShield.dZ5 - zgap / 2
+        Z[4] = Z[3] + dZ[3] + dZ[4] + zgap
 
-    #     dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
-    #     Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
-    #     for i in range(4, len(Z)):
-    #             zParts = int(np.ceil(2.0 * dZ[i] / 50))
-    #             zetino = list(np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], zParts + 1))  # ✅ fix
-    #             for zetix in zetino:  
-    #                 ScoPlane_xpos.append(0)
-    #                 ScoPlane_ypos.append(0)
-    #                 ScoPlane_zpos.append(zetix)
-    #                 ScoPlane_Add.append(1)
-    #                 ScoPlane_HalfY.append(200 if zetix > -4160 else 120)
-    #                 ScoPlane_HalfX.append(200)
-    
+        dZ[5] = ship_geo.muShield.dZ6 - zgap / 2
+        Z[5] = Z[4] + dZ[4] + dZ[5] + zgap
+
+        dZ[6] = ship_geo.muShield.dZ7 - zgap / 2
+        Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
+        
+
+        z_SND_planes = [ val for i in range(4, len(Z)) for val in np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], int(np.ceil(2.0 * dZ[i] / 50)) + 1)]
+
+
+        ScoPlane_xpos.extend([0.] * len(z_SND_planes))  # cm
+        ScoPlane_ypos.extend([0.] * len(z_SND_planes))  # cm
+        ScoPlane_zpos.extend(z_SND_planes)
+        ScoPlane_Add.extend([1] * len(z_SND_planes))
+        ScoPlane_HalfX.extend([150] * len(z_SND_planes))
+        ScoPlane_HalfY.extend([150] * len(z_SND_planes))
+        ScoPlane_arb8_dz.extend([0] * len(z_SND_planes))
+        ScoPlane_len.extend([0.1]*len(z_SND_planes))
+        ScoPlane_medium.extend(["vacuums"] * len(z_SND_planes))
+        ScoPlane_shape.extend(["Box"] * len(z_SND_planes))
+                
     jj = 0
     print("Adding scoring planes:"
           f" {len(ScoPlane_xpos)} planes defined")

@@ -234,5 +234,20 @@ def findRanges(inFileName, cmScale):
 
 if __name__ == "__main__":
 
-    run('../files/LFP_5_v2.txt', '../files/LFP_5_v2.root', 100, True)
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Convert B-field map text file into ROOT format.")
+    parser.add_argument("-i", "--input", required=True,
+                        help="Base name of the field map file (e.g. 'LFP_7' to load ./files/LFP_7.txt)")
+    parser.add_argument("-s", "--scale", type=float, default=100,
+                        help="Scale to convert units to cm (default: 100)")
+    parser.add_argument("--no_store_coords", dest="store_coords", action="store_false", default = True,
+                        help="Do NOT store x,y,z coordinates in ROOT tree (default: store them)")
+
+    args = parser.parse_args()
+
+    txt_path = f'../files/{args.input}.txt'
+    root_path = f'../files/{args.input}.root'
+
+    run(txt_path, root_path, args.scale, args.store_coords)
 

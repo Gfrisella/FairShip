@@ -437,19 +437,21 @@ def configure(run, ship_geo):
 
 
     in_params = list(ship_geo.muShield.params)
+    # HERE THE FLAG OF GUGLIELMO
+    SND_ver = False
+    DECAY_VESSEl = True
 
     MuonShield = ROOT.ShipMuonShield(
         in_params,
         ship_geo.muShield.z,
         ship_geo.muShield.WithConstField,
-        ship_geo.SC_mag
+        ship_geo.SC_mag,
+	SND_ver
     )
     detectorList.append(MuonShield)
     
     PutScoringPlanes = True
-    # HERE THE FLAG OF GUGLIELMO
-    SND_ver = True
-    DECAY_VESSEl = True
+    
     if PutScoringPlanes:
         print("From shipDet_conf.py, configure(): add a few scoring planes for muon shield performance study")
         ScoPlane_xpos  = [ 0., 0., 0] # cm

@@ -29,7 +29,8 @@ ShipMuonShield::ShipMuonShield() : FairModule("ShipMuonShield", "") {}
 ShipMuonShield::ShipMuonShield(std::vector<double> in_params,
                                Double_t z,
                                const Bool_t WithConstShieldField,
-                               const Bool_t SC_key)
+                               const Bool_t SC_key,
+			       const Bool_t SND)
     : FairModule("MuonShield", "ShipMuonShield")
 {
   for(size_t i = 0; i < in_params.size(); i++){
@@ -37,6 +38,7 @@ ShipMuonShield::ShipMuonShield(std::vector<double> in_params,
   }
   fWithConstShieldField = WithConstShieldField;
   fSC_mag = SC_key;
+  fSND = SND;
   dZ1 = in_params[0];
   dZ2 = in_params[1];
   dZ3 = in_params[2];
@@ -175,7 +177,7 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
     Double_t finalCorners[zParts][16];
     Double_t dxdy[4][2];
     Double_t dZp = dZ/Double_t(zParts);
-    Double_t inter_space = 0.12;
+    Double_t inter_space = (fSND) ? 0.12 : 0.01;
 
     for (int i = 0; i < 4; ++i)
     {

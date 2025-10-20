@@ -75,6 +75,9 @@ parser.add_argument("--FollowMuon",dest="followMuon", help="Make muonshield acti
 parser.add_argument("--FastMuon",  dest="fastMuon",  help="Only transport muons for a fast muon only background estimate", required=False, action="store_true")
 parser.add_argument("--Nuage",     dest="nuage",  help="Use Nuage, neutrino generator of OPERA", required=False, action="store_true")
 parser.add_argument("--phiRandom", dest="phiRandom",  help="only relevant for muon background generator, random phi", required=False, action="store_true")
+parser.add_argument("--SmearBeam", dest="SmearBeam",  help="Standard deviation of beam smearing [cm]", default=1.6, type=float)
+parser.add_argument("--PaintBeam", dest="PaintBeam",  help="Radius of beam painting [cm]", default=5, type=float)
+
 parser.add_argument("--Cosmics",   dest="cosmics",  help="Use cosmic generator, argument switch for cosmic generator 0 or 1", required=False,  default=None)
 parser.add_argument("--MuDIS",     dest="mudis",  help="Use muon deep inelastic scattering generator", required=False, action="store_true")
 parser.add_argument("--RpvSusy", dest="RPVSUSY",  help="Generate events based on RPV neutralino", required=False, action="store_true")
@@ -502,8 +505,13 @@ if simEngine == "MuonBack":
  #
  MuonBackgen = ROOT.MuonBackGenerator()
  # MuonBackgen.FollowAllParticles() # will follow all particles after hadron absorber, not only muons
- MuonBackgen.Init(inputFile,options.firstEvent,options.phiRandom)
- MuonBackgen.SetSmearBeam(5 * u.cm) # radius of ring, thickness 8mm
+ 
+ MuonBackgen.Init(inputFile, options.firstEvent, options.phiRandom)
+ MuonBackgen.SetPaintRadius(options.PaintBeam*u.cm)
+ MuonBackgen.SetSmearBeam(options.SmearBeam*u.cm)
+ MuonBackgen.SetPhiRandom(options.phiRandom)
+ 
+
  if DownScaleDiMuon:
     testf = ROOT.TFile.Open(inputFile)
     if not testf.FileHeader.GetTitle().find('diMu100.0')<0:
@@ -525,13 +533,13 @@ if simEngine == "MuonBack":
     if 'Veto' == x.GetName(): thereIstheVeto = True
     
     
- if options.followMuon :
+if options.followMuon :
     options.fastMuon = True
     if thereIstheVeto:
       modules['Veto'].SetFollowMuon()
     else:
       modules['ScoringPlane0'].SetFollowMuon() 
- if options.fastMuon :
+if options.fastMuon :
     if thereIstheVeto:
       modules['Veto'].SetFastMuon()
     else:

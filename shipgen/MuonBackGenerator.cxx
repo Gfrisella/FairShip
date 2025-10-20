@@ -163,13 +163,25 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
     LOGF(debug, "Seed: %d", theSeed);
     gRandom->SetSeed(theSeed);
   }
+  
+  
   if (fPhiRandomize){phi = gRandom->Uniform(0.,2.) * TMath::Pi();}
-  if (fsmearBeam > 0) {
-     Double_t r = fsmearBeam + 1.6 * gRandom->Gaus();
-     Double_t _phi = gRandom->Uniform(0., 2.) * TMath::Pi();
-     dx = r * TMath::Cos(_phi);
-     dy = r * TMath::Sin(_phi);
-  }
+
+   // Gaussian beam smearing
+   if (fsmearBeam > 0) {
+        dx = gRandom->Gaus(0, fsmearBeam);
+        dy = gRandom->Gaus(0, fsmearBeam);
+    }
+
+    // Uniform circular beam painting
+    if (fpaintBeam > 0) {
+        Double_t phi_beam = gRandom->Uniform(0., 2 * TMath::Pi());
+        dx += fpaintBeam * TMath::Cos(phi_beam);
+        dy += fpaintBeam * TMath::Sin(phi_beam);
+    }
+    
+    
+  
   if (id==-1){
      for (unsigned i = 0; i< MCTrack->GetEntries();  i++ ){
          auto* track = dynamic_cast<ShipMCTrack*>(MCTrack->At(i));

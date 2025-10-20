@@ -28,6 +28,7 @@ class MuonBackGenerator : public FairGenerator
   void SetPhiRandom(Bool_t fl) { fPhiRandomize = fl; };
   void FollowAllParticles() { followMuons = false; };
   void SetSmearBeam(Double_t sb) { fsmearBeam = sb; };
+    void SetPaintRadius(Double_t r) { fpaintBeam = r; };
   void SetSameSeed(Int_t s) {
     LOGF(info, "Seed: %d", s);
     fSameSeed = s;
@@ -50,6 +51,7 @@ protected:
   Bool_t followMuons;
   Int_t fSameSeed;
   Double_t fsmearBeam ;
+  Double_t fpaintBeam;
   ClassDef(MuonBackGenerator,6);
 };
 

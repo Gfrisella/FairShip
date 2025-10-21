@@ -104,13 +104,14 @@ class ScoringPlane: public FairDetector
     void SetFastMuon() {fFastMuon=true; std::cout<<"Massi ScoringPlane.SetFastMuon(): fFastMuon="<<fFastMuon<<std::endl;} 
     // make muon shield active to follow muons:
     void SetFollowMuon() {fFollowMuon=true;std::cout<<"Massi ScoringPlane.SetFollowMuon(): fFollowMuon="<<fFollowMuon<<std::endl;} 
+    void SetSND() {fSND=true;std::cout<<"Guglielmo ScoringPlane.SetSND(): fSND="<<fSND<<std::endl;} 
 
   private:
 
     /** Track information to be stored until the track leaves the
     active volume.
     */
-    Bool_t     fFastMuon, fFollowMuon;
+    Bool_t     fFastMuon, fFollowMuon, fSND; 
     Int_t          fTrackID;           //!  track index
     Int_t          fVolumeID;          //!  volume id
     TLorentzVector fPos;               //!  position at entrance

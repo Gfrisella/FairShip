@@ -364,7 +364,7 @@ def configure_veto(yaml_file, z0):
     detectorList.append(Veto)
 
 
-def configure(run, ship_geo):
+def configure(run, ship_geo, stepwise=False, stepLenght=0.5, staircase=False, SND_scoring_planes = False, HeBalloon = False):
     # ---- for backward compatibility ----
     if not hasattr(ship_geo, "DecayVolumeMedium"):
         raise ValueError(
@@ -438,16 +438,28 @@ def configure(run, ship_geo):
 
     in_params = list(ship_geo.muShield.params)
     # HERE THE FLAG OF GUGLIELMO
-    SND_ver = False
-    DECAY_VESSEl = True
+
+    print("Double Check in shipDet")
+    print("Stepwise:", stepwise)
+    print("StairCase:", staircase)
+    print("StepLenght:", stepLenght* u.cm)
+    print("HeBalloon:", HeBalloon)
+    print("SND_scoring_planes:", SND_scoring_planes)
+
+    print("Initialize the Muon Shield \n\n\n")
 
     MuonShield = ROOT.ShipMuonShield(
         in_params,
         ship_geo.muShield.z,
         ship_geo.muShield.WithConstField,
         ship_geo.SC_mag,
-	SND_ver
+        SND_scoring_planes
     )
+
+    MuonShield.Setstaircase(staircase)
+    MuonShield.SetStepsLenght(stepLenght * u.cm)
+    MuonShield.Setstepwise(stepwise)
+
     detectorList.append(MuonShield)
     
     PutScoringPlanes = True
@@ -456,10 +468,10 @@ def configure(run, ship_geo):
         print("From shipDet_conf.py, configure(): add a few scoring planes for muon shield performance study")
         ScoPlane_xpos  = [ 0., 0., 0] # cm
         ScoPlane_ypos  = [ 0., 0., 0] # cm
-        ScoPlane_zpos  = [ 4.5 * u.m, 83.95 * u.m , 32.7 * u.m]
-        ScoPlane_Add   = [1, 1, 0] # Add this Scoring Plane (1 or 0)
-        ScoPlane_HalfX = [250., 250., 400] # cm
-        ScoPlane_HalfY = [150., 330., 300] # cm
+        ScoPlane_zpos  = [ 4.5 * u.m, 83.95 * u.m , 32.6 * u.m]
+        ScoPlane_Add   = [1, 1, 1] # Add this Scoring Plane (1 or 0)
+        ScoPlane_HalfX = [250., 250., 455.9] # cm
+        ScoPlane_HalfY = [150., 330., 336.] # cm
         ScoPlane_len = [0.1, 0.1, 0.1]
         ScoPlane_medium = ["vacuums"] * len(ScoPlane_Add)
         ScoPlane_shape = ["Box"] * len(ScoPlane_Add)
@@ -467,14 +479,14 @@ def configure(run, ship_geo):
 
     ## DECAY VESSEL
 
-    if DECAY_VESSEl:
+    if HeBalloon:
         balloon_thickness = 0.14  # cm
         ScoPlane_xpos.extend([0.] * 7)  # cm
         ScoPlane_ypos.extend([0.] * 7)  # cm
         ScoPlane_zpos.extend([32.7 * u.m, 83 * u.m] + [57.85 * u.m] * 5)
         ScoPlane_Add.extend([1] * 7)
-        ScoPlane_HalfX.extend([455.9, 455.9] + [0] * 5)
-        ScoPlane_HalfY.extend([336., 336.] + [0] * 5)
+        ScoPlane_HalfX.extend([50, 200] + [0] * 5)
+        ScoPlane_HalfY.extend([135, 300] + [0] * 5)
         ScoPlane_arb8_dz.extend([0] * 2 + [5030/2 - balloon_thickness*2 - 1e-3] * 5)
         ScoPlane_len.extend([balloon_thickness] * 2 + [5030/2 - balloon_thickness*2 - 1e-3] * 5)
         ScoPlane_medium.extend(["PVC"] * 6 + ["helium"])
@@ -547,7 +559,7 @@ def configure(run, ship_geo):
         faces.append(Helium_balloon)
 
        
-    if SND_ver:
+    if SND_scoring_planes:
         zEndOfPassiveShield = ship_geo.muShield.z 
         dZ = [None] * 7
         Z = [None] * 7
@@ -576,7 +588,7 @@ def configure(run, ship_geo):
         Z[6] = Z[5] + dZ[5] + dZ[6] + zgap
         
 
-        z_SND_planes = [ val for i in range(4, len(Z)) for val in np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], int(np.ceil(2.0 * dZ[i] / 50)) + 1)]
+        z_SND_planes = [ val for i in range(1, len(Z)) for val in np.linspace(Z[i] - dZ[i], Z[i] + dZ[i], int(np.ceil(2.0 * dZ[i] / stepLenght)) + 1)]
 
 
         ScoPlane_xpos.extend([0.] * len(z_SND_planes))  # cm

@@ -53,6 +53,7 @@ ScoringPlane::ScoringPlane()
     fLastDetector(kFALSE),
     fFastMuon(kFALSE),
     fFollowMuon(kFALSE),
+    fSND(kFALSE),
     fVetoName("veto"),
     fLx(999.9), // cm
     fLy(999.9), // cm
@@ -82,6 +83,7 @@ ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetecto
     fScoringPlanePointCollection(new TClonesArray("vetoPoint")),
     fLastDetector(islastdetector),
     fFastMuon(kFALSE),
+    fSND(kFALSE),
     fFollowMuon(kFALSE),
     fVetoName("veto"),
     fLx(999.9), // cm
@@ -113,6 +115,7 @@ ScoringPlane::ScoringPlane(const char* name, Bool_t active, Bool_t islastdetecto
     fLastDetector(islastdetector),
     fFastMuon(kFALSE),
     fFollowMuon(kFALSE),
+    fSND(kFALSE),
     fVetoName("veto"),
     fMediumName("vacuums"), // Initialize fMediumName to a default
     fShapeType("Box"), // NEW: Default to "Box"
@@ -298,14 +301,14 @@ void ScoringPlane::ConstructGeometry()
    if (fFastMuon && fFollowMuon){
        const char* Vol  = "TGeoVolume";
        const char* Mag  = "Mag";
-       const char* Rock = "rock";
+       //const char* Rock = "rock";
        const char* Cavern = "Cavern";
-       const char* Ooo = "Ooo"; //diluted magnets
-       const char* Shi  = "Shi"; // added by Massi, for shielding
-       const char* Coi  = "Coi"; // added by Massi, for coil
-       const char* Ram  = "Ram"; // added by Massi, for all Ram pieces, including Hadron Stopper
-       const char* Ain  = "AbsorberAdd";
-       const char* Aout = "AbsorberAddCore";
+       //const char* Ooo = "Ooo"; //diluted magnets
+       //const char* Shi  = "Shi"; // added by Massi, for shielding
+       //const char* Coi  = "Coi"; // added by Massi, for coil
+       //const char* Ram  = "Ram"; // added by Massi, for all Ram pieces, including Hadron Stopper
+       //const char* Ain  = "AbsorberAdd";
+       //const char* Aout = "AbsorberAddCore";
        TObjArray* volumelist = gGeoManager->GetListOfVolumes();
        int lastvolume = volumelist->GetLast();
        int volumeiterator=0;
@@ -313,8 +316,16 @@ void ScoringPlane::ConstructGeometry()
         const char* volumename = volumelist->At(volumeiterator)->GetName();
         const char* classname  = volumelist->At(volumeiterator)->ClassName();
         if (strstr(classname,Vol)){
-         if (strstr(volumename,Mag) || strstr(volumename,Ooo) ||strstr(volumename,Cavern) ||strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)
-                                    || strstr(volumename,Shi) || strstr(volumename,Coi) || strstr(volumename,Ram) )
+         // Cavern is always stored in scoring plane
+         if (strstr(volumename,Cavern))
+         //if (strstr(volumename,Mag) || strstr(volumename,Ooo) ||strstr(volumename,Cavern) ||strstr(volumename,Rock)|| strstr(volumename,Ain) || strstr(volumename,Aout)
+         //                           || strstr(volumename,Shi) || strstr(volumename,Coi) || strstr(volumename,Ram) )
+         {
+           AddSensitiveVolume(gGeoManager->GetVolume(volumename));
+           cout << this->GetName() << ", ConstructGeometry(): made sensitive for following muons: "<< volumename <<endl;
+         }
+         // Magnets are stored if there is no SND
+         else if (strstr(volumename,Mag) && !fSND)
          {
            AddSensitiveVolume(gGeoManager->GetVolume(volumename));
            cout << this->GetName() << ", ConstructGeometry(): made sensitive for following muons: "<< volumename <<endl;

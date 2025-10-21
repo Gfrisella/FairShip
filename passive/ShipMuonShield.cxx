@@ -30,8 +30,8 @@ ShipMuonShield::ShipMuonShield(std::vector<double> in_params,
                                Double_t z,
                                const Bool_t WithConstShieldField,
                                const Bool_t SC_key,
-			       const Bool_t SND)
-    : FairModule("MuonShield", "ShipMuonShield")
+			                         const Bool_t SND)
+                               : FairModule("MuonShield", "ShipMuonShield")
 {
   for(size_t i = 0; i < in_params.size(); i++){
       shield_params.push_back(in_params[i]);
@@ -39,6 +39,8 @@ ShipMuonShield::ShipMuonShield(std::vector<double> in_params,
   fWithConstShieldField = WithConstShieldField;
   fSC_mag = SC_key;
   fSND = SND;
+  LOG(INFO) << " THE FLAG SND IS: " << fSND;
+
   dZ1 = in_params[0];
   dZ2 = in_params[1];
   dZ3 = in_params[2];
@@ -84,96 +86,25 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
 						z_translation));
 }
 
-
-// void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
-//   Double_t dZ, std::array<Double_t, 16> corners,
-//   Int_t color, TGeoUniformMagField *magField,
-//   TGeoVolume *tShield, Double_t x_translation,
-//   Double_t y_translation,
-//   Double_t z_translation,Bool_t stepGeo) {
-
-//     if (stepGeo)
-//   {
-//     CreateArb8 (arbName, medium, dZ, corners, color, magField, tShield, x_translation, y_translation, z_translation);
-//     return;
-//   }
-//     std::cout << "We are in CreateArb8: " << std::endl;
-//     Double_t partLength = 0.5;
-//     Int_t zParts = std::ceil(2.0*dZ/m/partLength);
-//     std::cout << "The length of the magnet is: " << dZ << std::endl;
-//     std::cout << "The number of parts is: " << zParts << std::endl;
-//     Double_t finalCorners[zParts][16];
-//     Double_t dxdy[4][2];
-//     Double_t dZp = dZ/Double_t(zParts);
-
-//     for (int i = 0; i < 4; ++i)
-//     {
-//     dxdy[i][0] = (corners[8+2*i] - corners[0+2*i])/Double_t(zParts);
-//     dxdy[i][1] = (corners[9+2*i] - corners[1+2*i])/Double_t(zParts);
-//     std::cout << "dxdy[" << i << "] = " << dxdy[i][0] << ", " << dxdy[i][1] << std::endl;
-//     }
-
-//     std::copy(corners.data() + 0,  corners.data() + 8, finalCorners[0]);
-//     std::cout << "The corners are copied " << std::endl;
-
-//     for (int i = 0; i < zParts; ++i)
-//     {
-//     for (int k = 0; k < 4; ++k)
-//     {
-//     finalCorners[i][8+2*k] = finalCorners[i][0+2*k] + dxdy[k][0];
-//     finalCorners[i][9+2*k] = finalCorners[i][1+2*k] + dxdy[k][1];
-//     }
-//     if (i != zParts-1)
-//     {
-//     std::copy(finalCorners[i] + 8, finalCorners[i] + 16, finalCorners[i+1]);
-//     }
-//     }
-
-//     for (int i = 0; i < zParts; ++i)
-//     {
-//     for (int k = 0; k < 4; ++k)
-//     {
-//     finalCorners[i][8+2*k] = finalCorners[i][0+2*k]  = (finalCorners[i][0+2*k] + finalCorners[i][8+2*k]) / 2.0;
-//     finalCorners[i][9+2*k] = finalCorners[i][1+2*k]  = (finalCorners[i][9+2*k] + finalCorners[i][1+2*k]) / 2.0;
-//     }
-//     }
-
-//     std::vector<TGeoVolume*> magF;
-
-//     for (int i = 0; i < zParts; ++i)
-//     {
-//     std::cout << "The corners of the magnet are: " << std::endl;
-//     magF.push_back(gGeoManager->MakeArb8(arbName + '_' + std::to_string(i), medium, dZp - 0.00001*m, finalCorners[i]));
-//     magF[i]->SetLineColor(color);
-//     if (fWithConstShieldField) {
-//     magF[i]->SetField(magField);
-//     }
-//     }
-
-//     for (int i = 0; i < zParts; ++i)
-//     {
-//       std::cout << "translation" << std::endl;
-//     Double_t true_z_translation = z_translation + 2.0 * Double_t(i) * dZp - dZ + dZp;
-//     tShield->AddNode(magF[i], 1, new TGeoTranslation(x_translation, y_translation, true_z_translation));
-//     }
-// }
-
-
 void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
   Double_t dZ, std::array<Double_t, 16> corners,
   Int_t color, TGeoUniformMagField *magField,
   TGeoVolume *tShield, Double_t x_translation,
   Double_t y_translation,
-  Double_t z_translation,Bool_t stepGeo) {
+  Double_t z_translation,Bool_t stepwise,
+  Double_t stepsLenght, Bool_t staircase) {
 
-    if (stepGeo)
+  LOG(INFO) << " CREATE ARB8 ";
+  LOG(INFO) << " THE FLAF STEPWISE IS " << stepwise;
+  LOG(INFO) << " THE FLAF STAIRCASE IS " << staircase;
+  LOG(INFO) << " THE FLAF STEPSLENGHT IS " << stepsLenght;
+
+    if (!stepwise)
   {
     CreateArb8 (arbName, medium, dZ, corners, color, magField, tShield, x_translation, y_translation, z_translation);
     return;
   }
-
-    Double_t partLength = 0.5;
-    Int_t zParts = std::ceil(2.0*dZ/m/partLength);
+    Int_t zParts = std::ceil(2.0*dZ/stepsLenght);
     Double_t finalCorners[zParts][16];
     Double_t dxdy[4][2];
     Double_t dZp = dZ/Double_t(zParts);
@@ -200,9 +131,9 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
     }
     }
 
-    Bool_t stepwise = false;
+    //Bool_t staircase = true;
     
-    if (stepwise){
+    if (staircase){
       for (int i = 0; i < zParts; ++i)
       {
       for (int k = 0; k < 4; ++k)
@@ -343,29 +274,33 @@ void ShipMuonShield::CreateMagnet(TString magnetName,TGeoMedium* medium,TGeoVolu
     TString str10 = "_MagBotLeft";
     TString str11 = "_MagBotRight";
 
-    Bool_t StepGeo = (magnetName == "MagnAbsorb");
+    // Determine stepwise
+    Bool_t usestepwise = stepwise;  
+    if (magnetName == "MagnAbsorb") {
+        usestepwise = false;
+    }
 
     switch (fieldDirection){
 
     case FieldDirection::up:
-      CreateArb8(magnetName + str1L, medium, dZ, cornersMainL, color[0], fields[0], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str1R, medium, dZ, cornersMainR, color[0], fields[0], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str2, medium, dZ, cornersMainSideL, color[1], fields[1], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str3, medium, dZ, cornersMainSideR, color[1], fields[1], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str8, medium, dZ, cornersTL, color[3], fields[3], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str9, medium, dZ, cornersTR, color[2], fields[2], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str10, medium, dZ, cornersBL, color[2], fields[2], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str11, medium, dZ, cornersBR, color[3], fields[3], tShield,  0, 0, Z, StepGeo);
+      CreateArb8(magnetName + str1L, medium, dZ, cornersMainL, color[0], fields[0], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str1R, medium, dZ, cornersMainR, color[0], fields[0], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str2, medium, dZ, cornersMainSideL, color[1], fields[1], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str3, medium, dZ, cornersMainSideR, color[1], fields[1], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str8, medium, dZ, cornersTL, color[3], fields[3], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str9, medium, dZ, cornersTR, color[2], fields[2], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str10, medium, dZ, cornersBL, color[2], fields[2], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str11, medium, dZ, cornersBR, color[3], fields[3], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
       break;
     case FieldDirection::down:
-      CreateArb8(magnetName + str1L, medium, dZ, cornersMainL, color[1], fields[1], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str1R, medium, dZ, cornersMainR, color[1], fields[1], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str2, medium, dZ, cornersMainSideL, color[0], fields[0], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str3, medium, dZ, cornersMainSideR, color[0], fields[0], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str8, medium, dZ, cornersTL, color[2], fields[2], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str9, medium, dZ, cornersTR, color[3], fields[3], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str10, medium, dZ, cornersBL, color[3], fields[3], tShield,  0, 0, Z, StepGeo);
-      CreateArb8(magnetName + str11, medium, dZ, cornersBR, color[2], fields[2], tShield,  0, 0, Z, StepGeo);
+      CreateArb8(magnetName + str1L, medium, dZ, cornersMainL, color[1], fields[1], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str1R, medium, dZ, cornersMainR, color[1], fields[1], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str2, medium, dZ, cornersMainSideL, color[0], fields[0], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str3, medium, dZ, cornersMainSideR, color[0], fields[0], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str8, medium, dZ, cornersTL, color[2], fields[2], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str9, medium, dZ, cornersTR, color[3], fields[3], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str10, medium, dZ, cornersBL, color[3], fields[3], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
+      CreateArb8(magnetName + str11, medium, dZ, cornersBR, color[2], fields[2], tShield,  0, 0, Z, usestepwise, stepsLenght, staircase);
       break;
     }
   }

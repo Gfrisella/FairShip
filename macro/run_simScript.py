@@ -74,9 +74,34 @@ parser.add_argument("--MuonBack",dest="muonback",  help="Generate events from mu
 parser.add_argument("--FollowMuon",dest="followMuon", help="Make muonshield active to follow muons", required=False, action="store_true")
 parser.add_argument("--FastMuon",  dest="fastMuon",  help="Only transport muons for a fast muon only background estimate", required=False, action="store_true")
 parser.add_argument("--Nuage",     dest="nuage",  help="Use Nuage, neutrino generator of OPERA", required=False, action="store_true")
+
+# Beam Flags
 parser.add_argument("--phiRandom", dest="phiRandom",  help="only relevant for muon background generator, random phi", required=False, action="store_true")
 parser.add_argument("--SmearBeam", dest="SmearBeam",  help="Standard deviation of beam smearing [cm]", default=1.6, type=float)
 parser.add_argument("--PaintBeam", dest="PaintBeam",  help="Radius of beam painting [cm]", default=5, type=float)
+
+# Add MuonShield geometry flags
+parser.add_argument("--StairCase", dest="StairCase",
+                    help="Enable StairCase geometry for MuonShield",
+                    action="store_true")  # boolean flag
+
+parser.add_argument("--StepLenght", dest="StepLenght",
+                    help="Step length for MuonShield geometry [cm]",
+                    default=50, type=float)
+
+parser.add_argument("--Stepwise", dest="Stepwise",
+                    help="Enable stepwise averaging of corners",
+                    action="store_true")
+
+# Scoring Planes Flags
+
+parser.add_argument("--HeBalloon", dest="HeBalloon",
+                    help="Enable HeBalloon Fiducial Volume as scoring planes",
+                    action="store_true")
+
+parser.add_argument("--SND_scoring_planes", dest="SND_scoring_planes",
+                    help="Enable SND as scoring planes along the MS",
+                    action="store_true")
 
 parser.add_argument("--Cosmics",   dest="cosmics",  help="Use cosmic generator, argument switch for cosmic generator 0 or 1", required=False,  default=None)
 parser.add_argument("--MuDIS",     dest="mudis",  help="Use muon deep inelastic scattering generator", required=False, action="store_true")
@@ -242,37 +267,6 @@ for x in os.listdir(options.outputDir):
 # Parameter file name
 parFile=f"{options.outputDir}/ship.params.{finaltag}.root"
 
-
-
-# HERE TEST BY MASSI:
-# add a user-defined task to the event-loop:
-colnames  = ['sco0_Point','sco1_Point', 'sco2_Point'] # all sco*_Point
-scolnames = ['sco1_Point'] # the selected sco*_Point
-MuonHitsOnly = True
-sXcrit,sYcrit = [250.],[330.] # Xcrit, Ycrit of the selected sco planes
-# ncritlist = [1,2,3,4,5,6,7,8] #ncritlist = [3,4,5]
-direc = os.getcwd()
-Samplesize = 10*0
-# above global stuff is alaso used at the end for smallify function!
-#if simEngine == "MuonBack" and SaveByCriterion: 
-# if SaveByCriterion or smallify: 
-#    print("Massi, from run_simScript.py: smallify output on the fly using SaveByCriterionTask")
-#    for crit in range(0,len(Xcrit)):  # if not MS9, we have 9 sco planes, from 0 to 8
-#        colnames.append( "sco%d"%crit+"_Point")
-#    for ncrit in ncritlist: 
-#        if ncrit < 0 or ncrit > len(ship_geo.ScoPlane_Add)-1: 
-#           print("# Massi, from run_simScript: check your scoring planes exist:",ncritlist,ship_geo.ScoPlane_Add)
-#           sys.exit(-1)
-#    for iz in range(0,len(ship_geo.ScoPlane_Add)): 
-#        if ship_geo.ScoPlane_Add[iz] == 0 and iz in ncritlist: 
-#           print("# Massi, from run_simScript: check your scoring planes are added:",iz,ship_geo.ScoPlane_Add,ncritlist)
-#           sys.exit(-1)
-#    for ncrit in ncritlist: 
-#        scolnames.append( "sco%i"%ncrit+"_Point")
-#        sXcrit.append(Xcrit[ncrit])
-#        sYcrit.append(Ycrit[ncrit])
-
-
 # In general, the following parts need not be touched
 # ========================================================================
 
@@ -288,25 +282,42 @@ run.SetUserConfig("g4Config.C") # user configuration file default g4Config.C
 rtdb = run.GetRuntimeDb()
 
 if SaveByCriterion: 
-   print("# Massi, from run_simScript: -----Add user tasks to run -----------------------------")
-   print("    use the selected colnames with their Xcrit and Ycrit for saving by criterion: ")
-   for kk in range(0,len(scolnames)): print("---> "+scolnames[kk]+"  %f"%sXcrit[kk]+" cm  %f"%sYcrit[kk]+" cm")
-   saveByCriterionTask = SaveByCriterionTask()  # defined in myfunctions
-   saveByCriterionTask.InitializeMembers(direc,scolnames,sXcrit,sYcrit,samplesize=Samplesize,MuonHitsOnly=MuonHitsOnly) 
-  #saveByCriterionTask = SaveByCriterionTask(direc,scolnames,sXcrit,sYcrit,samplesize=Samplesize,MuonHitsOnly=MuonHitsOnly) 
-   run.AddTask(saveByCriterionTask)
-   # calling also saveByCriterionTask.FinishMembers() below, around Finish
-   # END TEST BY MASSI
-   # if does not work, then try to use the C++ way...
-   
-   
-   
+    scolnames = ['sco1_Point'] # the selected sco*_Point
+    MuonHitsOnly = True
+    sXcrit,sYcrit = [250.],[330.] # Xcrit, Ycrit of the selected sco planes
+    direc = os.getcwd()
+    Samplesize = 10*0
+    print("# Massi, from run_simScript: -----Add user tasks to run -----------------------------")
+    print("    use the selected colnames with their Xcrit and Ycrit for saving by criterion: ")
+    for kk in range(0,len(scolnames)): print("---> "+scolnames[kk]+"  %f"%sXcrit[kk]+" cm  %f"%sYcrit[kk]+" cm")
+    saveByCriterionTask = SaveByCriterionTask()  # defined in myfunctions
+    saveByCriterionTask.InitializeMembers(direc,scolnames,sXcrit,sYcrit,samplesize=Samplesize,MuonHitsOnly=MuonHitsOnly) 
+    run.AddTask(saveByCriterionTask)
    
 # -----Create geometry----------------------------------------------
 # import shipMuShield_only as shipDet_conf # special use case for an attempt to convert active shielding geometry for use with FLUKA
 # import shipTarget_only as shipDet_conf
 import shipDet_conf
-modules = shipDet_conf.configure(run,ship_geo)
+
+if options.StairCase or options.SND_scoring_planes:
+    options.Stepwise = True
+
+print("Stepwise:", options.Stepwise)
+print("StairCase:", options.StairCase)
+print("StepLenght:", options.StepLenght)
+print("HeBalloon:", options.HeBalloon)
+print("SND_scoring_planes:", options.SND_scoring_planes)
+
+modules = shipDet_conf.configure(
+    run,
+    ship_geo,
+    staircase=options.StairCase,
+    stepLenght=options.StepLenght,
+    stepwise=options.Stepwise,
+    HeBalloon=options.HeBalloon,
+    SND_scoring_planes=options.SND_scoring_planes
+)
+#modules = shipDet_conf.configure(run,ship_geo)
 # -----Create PrimaryGenerator--------------------------------------
 primGen = ROOT.FairPrimaryGenerator()
 if simEngine == "Pythia8":

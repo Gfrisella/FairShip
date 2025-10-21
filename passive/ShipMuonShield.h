@@ -23,8 +23,12 @@ class ShipMuonShield : public FairModule
                    Double_t z,
                    const Bool_t WithConstShieldField,
                    const Bool_t SC_key,
-		   const Bool_t SND);
+		               const Bool_t SND);
     ShipMuonShield();
+    void Setstepwise(Bool_t sG) { stepwise = sG; };
+    void Setstaircase(Bool_t sW) { staircase = sW; };
+    void SetStepsLenght(Double_t sL) { stepsLenght = sL; };
+
     virtual ~ShipMuonShield();
     void ConstructGeometry();
   ClassDef(ShipMuonShield, 4)
@@ -38,6 +42,11 @@ class ShipMuonShield : public FairModule
     Bool_t fSC_mag;
     Bool_t fSND;  
     std::vector<Double_t> shield_params;
+
+    Bool_t stepwise;
+    Bool_t staircase;
+    Double_t stepsLenght;  // Magnet lenght steps default value in cm
+
 
     void CreateArb8(TString arbName,
                     TGeoMedium* medium,
@@ -55,7 +64,8 @@ class ShipMuonShield : public FairModule
         Int_t color, TGeoUniformMagField *magField,
         TGeoVolume *tShield, Double_t x_translation,
         Double_t y_translation,
-        Double_t z_translation,Bool_t stepGeo);
+        Double_t z_translation,Bool_t stepwise,
+        Double_t stepsLenght, Bool_t staircase);
 
     Int_t Initialize(std::vector<TString>& magnetName,
                      std::vector<FieldDirection>& fieldDirection,
@@ -98,4 +108,4 @@ class ShipMuonShield : public FairModule
                       Bool_t SC_key);
 };
 
-#endif //MuonSield_H
+#endif //MuonShield_H

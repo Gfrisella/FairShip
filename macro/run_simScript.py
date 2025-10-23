@@ -76,7 +76,7 @@ parser.add_argument("--FastMuon",  dest="fastMuon",  help="Only transport muons 
 parser.add_argument("--Nuage",     dest="nuage",  help="Use Nuage, neutrino generator of OPERA", required=False, action="store_true")
 
 # Beam Flags
-parser.add_argument("--phiRandom", dest="phiRandom",  help="only relevant for muon background generator, random phi", required=False, action="store_true")
+parser.add_argument("--phiSolid", dest="phiSolid",  help="Solid rotate the px py vectors degress", default=0, type=float)
 parser.add_argument("--SmearBeam", dest="SmearBeam",  help="Standard deviation of beam smearing [cm]", default=1.6, type=float)
 parser.add_argument("--PaintBeam", dest="PaintBeam",  help="Radius of beam painting [cm]", default=5, type=float)
 
@@ -517,10 +517,10 @@ if simEngine == "MuonBack":
  MuonBackgen = ROOT.MuonBackGenerator()
  # MuonBackgen.FollowAllParticles() # will follow all particles after hadron absorber, not only muons
  
- MuonBackgen.Init(inputFile, options.firstEvent, options.phiRandom)
+ MuonBackgen.Init(inputFile, options.firstEvent)
  MuonBackgen.SetPaintRadius(options.PaintBeam*u.cm)
  MuonBackgen.SetSmearBeam(options.SmearBeam*u.cm)
- MuonBackgen.SetPhiRandom(options.phiRandom)
+ MuonBackgen.SetPhiSolid(options.phiSolid*u.deg)
  
 
  if DownScaleDiMuon:
@@ -533,7 +533,7 @@ if simEngine == "MuonBack":
  primGen.AddGenerator(MuonBackgen)
  options.nEvents = min(options.nEvents,MuonBackgen.GetNevents())
  MCTracksWithHitsOnly = True # otherwise, output file becomes too big
- print('Process ',options.nEvents,' from input file, with Phi random=',options.phiRandom, ' with MCTracksWithHitsOnly',MCTracksWithHitsOnly)
+ print('Process ',options.nEvents,' from input file, with Phi solid=',options.phiSolid, ' degrees with MCTracksWithHitsOnly',MCTracksWithHitsOnly)
  
  
  ## DEVELOPMENT

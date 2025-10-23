@@ -23,19 +23,19 @@ MuonBackGenerator::MuonBackGenerator() {
 // -------------------------------------------------------------------------
 // -----   Default constructor   -------------------------------------------
 Bool_t MuonBackGenerator::Init(const char* fileName) {
-  return Init(fileName, 0, false);
+  return Init(fileName, 0);
 }
 // -----   Default constructor   -------------------------------------------
-Bool_t MuonBackGenerator::Init(const char* fileName, const int firstEvent, const Bool_t fl = false ) {
+Bool_t MuonBackGenerator::Init(const char* fileName, const int firstEvent ) {
     LOG(info) << "Opening input file " << fileName;
     fInputFile = TFile::Open(fileName);
     if (!fInputFile) {
         LOG(fatal) << "Error opening the Signal file: " << fileName;
     }
   fn = firstEvent;
-  fPhiRandomize = fl;
-  fSameSeed = 0;
-  fsmearBeam = 0; // default no beam smearing, use SetSmearBeam(sb) if different, sb [cm]
+//   fPhiRandomize = 0;
+//   fSameSeed = 0;
+//   fsmearBeam = 0; // default no beam smearing, use SetSmearBeam(sb) if different, sb [cm]
   fdownScaleDiMuon = kFALSE; // only needed for muflux simulation
   fTree = fInputFile->Get<TTree>("pythia8-Geant4");
   if (fTree){
@@ -165,7 +165,7 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
   }
   
   
-  if (fPhiRandomize){phi = gRandom->Uniform(0.,2.) * TMath::Pi();}
+//   if (fPhiRandomize){phi = gRandom->Uniform(0.,2.) * TMath::Pi();}
 
    // Gaussian beam smearing
    if (fsmearBeam > 0) {
@@ -189,11 +189,11 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
          px = track->GetPx();
          py = track->GetPy();
          pz = track->GetPz();
-         if (fPhiRandomize) {
+         if (fPhiSolid > 0) {
              Double_t phi0 = TMath::ATan2(py, px);
              Double_t pt = track->GetPt();
-             px = pt * TMath::Cos(phi + phi0);
-             py = pt * TMath::Sin(phi + phi0);
+             px = pt * TMath::Cos(fPhiSolid + phi0);
+             py = pt * TMath::Sin(fPhiSolid + phi0);
        }
        vx = track->GetStartX()+dx;
        vy = track->GetStartY()+dy;
@@ -227,11 +227,11 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
   }else{
     vx += dx/100.;
     vy += dy/100.;
-    if (fPhiRandomize){
-     Double_t pt  = TMath::Sqrt( px*px+py*py );
-     px = pt*TMath::Cos(phi);
-     py = pt*TMath::Sin(phi);
-    }
+    // if (fPhiRandomize){
+    //  Double_t pt  = TMath::Sqrt( px*px+py*py );
+    //  px = pt*TMath::Cos(phi);
+    //  py = pt*TMath::Sin(phi);
+    // }
     cpg->AddTrack(int(pythiaid),px,py,pz,vx*100.,vy*100.,vz*100.,-1.,false,e,pythiaid,parentid);
     cpg->AddTrack(int(id),px,py,pz,vx*100.,vy*100.,vz*100.,-1.,true,e,tof,w);
   }

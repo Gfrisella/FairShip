@@ -40,6 +40,10 @@ ShipMuonShield::ShipMuonShield(std::vector<double> in_params,
   fSC_mag = SC_key;
   fSND = SND;
   LOG(INFO) << " THE FLAG SND IS: " << fSND;
+  LOG(INFO) << " CREATE ARB8 ";
+  LOG(INFO) << " THE FLAF STEPWISE IS " << stepwise;
+  LOG(INFO) << " THE FLAF STAIRCASE IS " << staircase;
+  LOG(INFO) << " THE FLAF STEPSLENGHT IS " << stepsLenght;
 
   dZ1 = in_params[0];
   dZ2 = in_params[1];
@@ -93,11 +97,6 @@ void ShipMuonShield::CreateArb8(TString arbName, TGeoMedium *medium,
   Double_t y_translation,
   Double_t z_translation,Bool_t stepwise,
   Double_t stepsLenght, Bool_t staircase) {
-
-  LOG(INFO) << " CREATE ARB8 ";
-  LOG(INFO) << " THE FLAF STEPWISE IS " << stepwise;
-  LOG(INFO) << " THE FLAF STAIRCASE IS " << staircase;
-  LOG(INFO) << " THE FLAF STEPSLENGHT IS " << stepsLenght;
 
     if (!stepwise)
   {

@@ -542,7 +542,9 @@ if simEngine == "MuonBack":
  thereIstheVeto = False
  for x in run.GetListOfModules():
     if 'Veto' == x.GetName(): thereIstheVeto = True
-    
+
+if options.SND_scoring_planes:
+    modules['ScoringPlane0'].SetSND()
     
 if options.followMuon :
     options.fastMuon = True

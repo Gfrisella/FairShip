@@ -37,7 +37,8 @@ class ShipMuonShield : public FairModule
 
     Double_t fMuonShieldHalfLength;   // FIXME: HA_field to be removed in the next workshop meeting
     Double_t dZ0, dZ1, dZ2, dZ3, dZ4, dZ5, dZ6, dZ7, dXgap, zEndOfProxShield;
-    Int_t InitMedium(TString name);
+    size_t num_magnets; 
+    Int_t InitMedium(TString name), nParams;
     Bool_t fWithConstShieldField;
     Bool_t fSC_mag;
     Bool_t fSND;  
@@ -67,7 +68,7 @@ class ShipMuonShield : public FairModule
         Double_t z_translation,Bool_t stepwise,
         Double_t stepsLenght, Bool_t staircase);
 
-    Int_t Initialize(std::vector<TString>& magnetName,
+    void Initialize(std::vector<TString>& magnetName,
                      std::vector<FieldDirection>& fieldDirection,
                      std::vector<Double_t>& dXIn,
                      std::vector<Double_t>& dYIn,
@@ -78,6 +79,7 @@ class ShipMuonShield : public FairModule
                      std::vector<Double_t>& dY_yokeIn,
                      std::vector<Double_t>& dY_yokeOut,
                      std::vector<Double_t>& dZ,
+                     std::vector<Double_t>& Z_rel,
                      std::vector<Double_t>& midGapIn,
                      std::vector<Double_t>& midGapOut,
                      std::vector<Double_t>& Bgoal,

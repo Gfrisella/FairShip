@@ -161,7 +161,7 @@ def addVMCFields(shipGeo, controlFile = '', verbose = False, withVirtualMC = Tru
          fieldsList.append('NuMap')
 
       if not shipGeo.muShield.WithConstField:
-       offset, _ , _= ShieldUtils.find_offset(shipGeo) 
+       offset = shipGeo.muShield.Z[0] - shipGeo.muShield.Z_rel[0]
        quadSymm = True
        print('Guglielmo, check the Muon Shield field map of : \n', shipGeo.shieldName) 
        #print('This is the enviroment:',$FAIRSHIP)  

@@ -210,7 +210,9 @@ if options.testFlag:
 
 
 SaveByCriterion = options.SaveByCriterion # added by Massi
-
+ # implemented to verify if there is the veto
+thereIstheVeto = False
+print("CHECK:    thereIstheVeto:", thereIstheVeto)
 
 #sanity check
 if (HNL and options.RPVSUSY) or (HNL and options.DarkPhoton) or (options.DarkPhoton and options.RPVSUSY):
@@ -538,8 +540,7 @@ if simEngine == "MuonBack":
  
  ## DEVELOPMENT
  
- # implemented to verify if there is the veto
- thereIstheVeto = False
+
  for x in run.GetListOfModules():
     if 'Veto' == x.GetName(): thereIstheVeto = True
 

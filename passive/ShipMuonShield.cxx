@@ -323,8 +323,10 @@ void ShipMuonShield::Initialize(std::vector<TString> &magnetName,
     i->reserve(num_magnets);
   }
 
-  magnetName = {"MagnAbsorb", "Magn1", "Magn2", "Magn3",
-    "Magn4",       "Magn5",       "Magn6"};
+  magnetName.push_back("MagnAbsorb");
+  for (size_t i = 1; i < num_magnets; ++i) {
+    magnetName.push_back(Form("Magn%d", i));
+  }
 
   fieldDirection = {
 FieldDirection::up,   FieldDirection::up,   FieldDirection::up,

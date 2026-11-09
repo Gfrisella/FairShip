@@ -1462,6 +1462,22 @@ class UpstreamTaggerScoringPlane:  # Partial stub
     ) -> None: ...
     def GetName(self) -> str: ...
 
+class SSTScoringPlane:  # Partial stub
+    def __init__(self, name: str, active: bool) -> None: ...
+    def AddPlane(
+        self,
+        name: str,
+        x: float,
+        y: float,
+        z: float,
+        sizeX: float,
+        sizeY: float,
+        sizeZ: float,
+        absPdgCodes: list[int] = ...,
+        keepTracks: bool = ...,
+    ) -> None: ...
+    def GetName(self) -> str: ...
+
 class UpstreamTaggerHit(FairMCPoint):  # Partial stub
     def __init__(
         self, point: Any = ..., t0: float = ..., digitizedPosition: TVector3 = ..., time_res: float = ...

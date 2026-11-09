@@ -18,6 +18,7 @@
 #include "ROOT/RNTupleModel.hxx"
 #include "ROOT/RNTupleReader.hxx"
 #include "ROOT/RNTupleWriter.hxx"
+#include "SSTScoringPoint.h"
 #include "TBufferFile.h"
 #include "TClass.h"
 #include "TFile.h"
@@ -377,6 +378,16 @@ int main(int argc, char** argv) {
     objects.emplace_back(2, 2, 1, pos, mom, 345.67, 456.78, 0., -13);
     total++;
     if (test_rntuple_io("UpstreamTaggerScoringPoint", objects)) passed++;
+  }
+
+  {
+    std::vector<SSTScoringPoint> objects;
+    TVector3 pos(1.0, 2.0, 3.0);
+    TVector3 mom(0.1, 0.2, 0.3);
+    objects.emplace_back(1, 1, 1, pos, mom, 123.45, 234.56, 0., 13);
+    objects.emplace_back(2, 2, 1, pos, mom, 345.67, 456.78, 0., -13);
+    total++;
+    if (test_rntuple_io("SSTScoringPoint", objects)) passed++;
   }
 
   {

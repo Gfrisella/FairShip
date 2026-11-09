@@ -45,6 +45,9 @@ class veto : public SHiP::Detector<vetoPoint> {
   void SetFollowMuon() {
     fFollowMuon = true;
   }  // make muon shield active to follow muons
+  void SetBalloonOnly() {
+    fBalloonOnly = true;
+  }  // build only the He balloon and the decay medium: no walls, ribs or SBT
   void SetVesselDimensions(Float_t x1, Float_t x2, Float_t y1, Float_t y2,
                            Float_t vesselstart) {
     VetoStartInnerX = x1;
@@ -92,6 +95,8 @@ class veto : public SHiP::Detector<vetoPoint> {
   */
 
   Bool_t fFastMuon, fFollowMuon;
+  //! Build only the He balloon and the decay medium (Default=False).
+  Bool_t fBalloonOnly;
 
   Float_t f_InnerSupportThickness;
   Float_t f_OuterSupportThickness;
@@ -112,7 +117,7 @@ class veto : public SHiP::Detector<vetoPoint> {
   TString supportMedOut_name;
   //! medium of decay volume(Default= helium).
   TString decayVolumeMed_name;
-  //! medium of He Balloon(Default= PVC).
+  //! medium of He Balloon(Default= mylar_linerHe).
   TString f_he_balloon_med_name;
 
   TGeoMedium* vetoMed;
@@ -206,6 +211,11 @@ class veto : public SHiP::Detector<vetoPoint> {
                              double a1, double a2, double b1, double b2,
                              double dA, double dB, Int_t color,
                              TGeoMedium* material, Bool_t sens);
+
+  /** He balloon filled with the decay medium, between z_start and z_end;
+   * only the decay medium if the balloon thickness is 0.
+   */
+  TGeoVolume* make_balloon(double z_start, double z_end);
 
   TGeoVolume* make_segments();
 };

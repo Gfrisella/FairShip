@@ -16,5 +16,10 @@
 #pragma link C++ class Tracklet+;
 #pragma link C++ class std::vector<strawtubesHit>+;
 #pragma link C++ class std::vector<Tracklet>+;
+#pragma link C++ class SHiP::Detector<SSTScoringPoint>-;
+#pragma link C++ class SHiP::ScoringPlane<SSTScoringPoint>-;
+#pragma link C++ class SSTScoringPlane-;
+#pragma link C++ class SSTScoringPoint+;
+#pragma link C++ class std::vector<SSTScoringPoint>+;
 
 #endif

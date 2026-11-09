@@ -255,6 +255,13 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
+    "--MuonBackSSTOnly",
+    dest="muonBackSSTOnly",
+    help="MuonBack: keep only the events with a point in the SST scoring plane or in the straw stations, "
+    "instead of in any detector",
+    action="store_true",
+)
+parser.add_argument(
     "--phiRandom",
     help="only relevant for muon background generator, random phi (not with run_fixedTarget input)",
     action="store_true",
@@ -358,8 +365,8 @@ parser.add_argument(
     dest="geofile",
     help="Transport particles through the geometry stored in this geometry file, written by an earlier"
     " run_simScript.py, instead of the one the current code builds. The geometry configuration stored in the file is"
-    " used, so geometry options (-Y, --strawDesign, --shieldName, --helium, --vacuums, --SND, --noSND, --SND_design,"
-    " --target-yaml) cannot be given.",
+    " used, so geometry options (-Y, --strawDesign, --shieldName, --helium, --vacuums, --balloonOnly, --SND, --noSND,"
+    " --SND_design, --target-yaml) cannot be given.",
     default=None,
 )
 parser.add_argument("-o", "--output", dest="outputDir", help="Output directory", default=".")
@@ -435,6 +442,12 @@ parser.add_argument(
     action="store_const",
     const="vacuums",
     default="helium",
+)
+parser.add_argument(
+    "--balloonOnly",
+    dest="balloonOnly",
+    help="Decay vessel with only the He balloon and the decay medium: no walls, ribs or SBT liquid scintillator",
+    action="store_true",
 )
 
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action="store_true")
@@ -540,7 +553,16 @@ if options.geofile:
     # The geometry and its configuration both come from the geometry file.
     # Parse again with these options already set to None: argparse then leaves
     # them alone unless they are given on the command line.
-    geometry_options = ["dy", "strawDesign", "shieldName", "decayVolMed", "SND", "SND_design", "target_yaml"]
+    geometry_options = [
+        "dy",
+        "strawDesign",
+        "shieldName",
+        "decayVolMed",
+        "balloonOnly",
+        "SND",
+        "SND_design",
+        "target_yaml",
+    ]
     probe = parser.parse_args(namespace=Namespace(**dict.fromkeys(geometry_options)))
     given = [
         "/".join(flag for action in parser._actions if action.dest == dest for flag in action.option_strings)
@@ -609,6 +631,7 @@ else:
         strawDesign=options.strawDesign,
         shieldName=options.shieldName,
         DecayVolumeMedium=options.decayVolMed,
+        VesselBalloonOnly=options.balloonOnly,
         SND=options.SND,
         SND_design=options.SND_design,
         TARGET_YAML=options.target_yaml,
@@ -1199,9 +1222,18 @@ if options.muonback:
         if "Point" in name:
             pointContainers.append(name)
 
-    # The scoring planes record every crossing with no energy threshold, so on their own they
-    # must not make an event non-empty.
-    pointContainers = [n for n in pointContainers if n not in ("CaloScoringPlanePoint", "UpstreamTaggerScoringPoint")]
+    if options.muonBackSSTOnly:
+        # Keep only the events reaching the spectrometer: the plane in front of SST station 1
+        # or the straw stations themselves.
+        pointContainers = [n for n in pointContainers if n in ("SSTScoringPoint", "strawtubesPoint")]
+    else:
+        # The scoring planes record every crossing with no energy threshold, so on their own they
+        # must not make an event non-empty.
+        pointContainers = [
+            n
+            for n in pointContainers
+            if n not in ("CaloScoringPlanePoint", "UpstreamTaggerScoringPoint", "SSTScoringPoint")
+        ]
 
     # Filter out empty events (events with no hits in any Point container)
     for event in t:
@@ -1232,6 +1264,7 @@ if options.muonback:
         "MCEventHeader",
         "UpstreamTaggerPoint",
         "UpstreamTaggerScoringPoint",
+        "SSTScoringPoint",
         "MTCdetPoint",
         "SiliconTargetPoint",
         "sGeoTracks",

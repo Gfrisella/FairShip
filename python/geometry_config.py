@@ -130,6 +130,7 @@ def create_config(
     SND: bool = True,
     SND_design=None,
     TARGET_YAML=None,
+    VesselBalloonOnly: bool = False,
 ):
     """
     Create geometry configuration with specified parameters.
@@ -143,6 +144,7 @@ def create_config(
         SND: Enable SND detector, default: True
         SND_design: SND design options (list of design numbers), default: [2]
         TARGET_YAML: Path to target YAML configuration file, default: "$FAIRSHIP/geometry/target_config.yaml"
+        VesselBalloonOnly: Decay vessel with only the He balloon, no walls, ribs or SBT, default: False
 
     Returns:
         Config: Geometry configuration object
@@ -156,6 +158,7 @@ def create_config(
     # Create configuration object
     c = Config()
     c.DecayVolumeMedium = DecayVolumeMedium
+    c.VesselBalloonOnly = VesselBalloonOnly
     c.SND = SND
     # Ensure SND_design is always a list
     if not isinstance(SND_design, list):
@@ -373,6 +376,15 @@ def create_config(
             f"CaloScoringPlane ends at z = {c.CaloScoringPlane.z + c.CaloScoringPlane.DZ / 2} cm, "
             f"beyond the downstream ECN3 wall at {c.cave.zEnd} cm"
         )
+
+    # SSTScoringPlane: ideal (vacuum) plane in front of SST station 1, the first one upstream of
+    # the spectrometer magnet. Every track entering it is scored. Its z is set in
+    # shipDet_conf.configure, from the station envelope of strawtubes_config.yaml.
+    c.SSTScoringPlane = AttrDict()
+    c.SSTScoringPlane.DX = 4 * u.m  # full width  (SST aperture)
+    c.SSTScoringPlane.DY = 6 * u.m  # full height (SST aperture)
+    c.SSTScoringPlane.DZ = 1 * u.mm  # full thickness
+    c.SSTScoringPlane.Gap = 1 * u.cm  # between its downstream face and the station envelope
 
     # for the digitizing step
     c.strawtubesDigi = AttrDict()

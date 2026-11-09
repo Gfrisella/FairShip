@@ -186,7 +186,7 @@ def configure_snd_siliconTarget(yaml_file: str, ship_geo) -> None:
     detectorList.append(SiliconTarget)
 
 
-def configure_veto(yaml_file: str, z0) -> None:
+def configure_veto(yaml_file: str, z0, balloon_only: bool = False) -> None:
     with open(yaml_file) as file:
         config = yaml.safe_load(file)
 
@@ -202,6 +202,8 @@ def configure_veto(yaml_file: str, z0) -> None:
     )
 
     Veto.SetLiquidVeto(1)
+    if balloon_only:
+        Veto.SetBalloonOnly()
 
     Veto.SetVesselStructure(
         veto_geo.innerSupport,
@@ -640,12 +642,20 @@ def configure(run, ship_geo, geofile: str | None = None):
     configure_veto(
         os.path.join(fairship, f"geometry/veto_config_{ship_geo.DecayVolumeMedium}.yaml"),
         ship_geo.decayVolume.z0,
+        balloon_only=ship_geo.get("VesselBalloonOnly", False),  # absent in geometry files made before it
     )
 
     configure_strawtubes(
         os.path.join(os.environ["FAIRSHIP"], "geometry", "strawtubes_config.yaml"),
         ship_geo,
     )
+
+    if hasattr(ship_geo, "SSTScoringPlane"):  # absent in geometry files made before it
+        sst = ship_geo.SSTScoringPlane
+        sst.z = ship_geo.TrackStation1.z - ship_geo.strawtubes_geo.station_length - sst.Gap - sst.DZ / 2.0
+        sst_scoring_plane = ROOT.SSTScoringPlane("SSTScoringPlane", ROOT.kTRUE)
+        sst_scoring_plane.AddPlane("SSTScoringPlane1", 0.0, 0.0, sst.z, sst.DX, sst.DY, sst.DZ)
+        detectorList.append(sst_scoring_plane)
 
     if hasattr(ship_geo, "CaloScoringPlane"):  # absent in geometry files made before SplitCal removal
         caloScoringPlane = ROOT.CaloScoringPlane("CaloScoringPlane", ROOT.kTRUE)
